@@ -30,26 +30,44 @@
         }
 
         /* --- UI OVERLAYS --- */
-        #menu {
+        .ui-screen {
             position: absolute;
             inset: 0;
-            background: radial-gradient(circle, rgba(16, 185, 129, 0.1) 0%, rgba(2, 6, 23, 1) 100%);
+            background: radial-gradient(circle, rgba(16, 185, 129, 0.05) 0%, rgba(2, 6, 23, 1) 100%);
             display: flex;
             align-items: center;
             justify-content: center;
             z-index: 1000;
             pointer-events: auto;
+            backdrop-filter: blur(5px);
         }
 
         .menu-card {
-            background: rgba(15, 23, 42, 0.9);
-            padding: 3rem;
-            border-radius: 2rem;
-            border: 2px solid rgba(16, 185, 129, 0.4);
-            box-shadow: 0 0 80px rgba(0, 0, 0, 0.8), 0 0 20px rgba(16, 185, 129, 0.2);
+            background: rgba(15, 23, 42, 0.95);
+            padding: 2.5rem;
+            border-radius: 1.5rem;
+            border: 2px solid rgba(16, 185, 129, 0.3);
+            box-shadow: 0 0 50px rgba(0, 0, 0, 0.9);
             text-align: center;
-            max-width: 450px;
+            max-width: 500px;
             width: 100%;
+        }
+
+        /* Lobby Styles */
+        .room-item {
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid #334155;
+            padding: 12px 20px;
+            border-radius: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            transition: all 0.2s;
+        }
+        .room-item:hover {
+            border-color: var(--primary);
+            background: rgba(16, 185, 129, 0.1);
         }
 
         #hud {
@@ -73,84 +91,37 @@
         }
 
         .hp-bar-outer {
-            width: 250px;
-            height: 12px;
-            background: #0f172a;
-            border-radius: 6px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            overflow: hidden;
-            margin-top: 5px;
+            width: 250px; height: 12px; background: #0f172a;
+            border-radius: 6px; border: 1px solid rgba(255, 255, 255, 0.1);
+            overflow: hidden; margin-top: 5px;
         }
 
         #hp-bar-inner {
-            width: 100%;
-            height: 100%;
+            width: 100%; height: 100%;
             background: linear-gradient(90deg, #10b981, #34d399);
             transition: width 0.2s ease-out;
             box-shadow: 0 0 15px rgba(16, 185, 129, 0.5);
         }
 
         #leaderboard {
-            position: absolute;
-            top: 25px;
-            right: 25px;
-            background: rgba(15, 23, 42, 0.85);
-            border: 1px solid rgba(16, 185, 129, 0.3);
-            padding: 15px;
-            border-radius: 12px;
-            min-width: 220px;
-            font-family: 'JetBrains Mono', monospace;
+            position: absolute; top: 25px; right: 25px;
+            background: rgba(15, 23, 42, 0.85); border: 1px solid rgba(16, 185, 129, 0.3);
+            padding: 15px; border-radius: 12px; min-width: 220px;
         }
 
         .weapon-slot {
-            padding: 8px 12px;
-            border-radius: 8px;
-            background: #1e293b;
-            border: 1px solid #334155;
-            font-size: 10px;
-            color: #94a3b8;
-            transition: all 0.2s;
+            padding: 8px 12px; border-radius: 8px; background: #1e293b;
+            border: 1px solid #334155; font-size: 10px; color: #94a3b8;
         }
-        .weapon-slot.active {
-            background: #064e3b;
-            border-color: #10b981;
-            color: white;
-            transform: scale(1.1);
-        }
-
-        .kill-feed-container {
-            position: absolute;
-            top: 25px;
-            left: 25px;
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-        }
+        .weapon-slot.active { background: #064e3b; border-color: #10b981; color: white; transform: scale(1.1); }
 
         .kill-msg {
-            background: rgba(239, 68, 68, 0.2);
-            padding: 5px 15px;
-            border-radius: 4px;
-            border-left: 3px solid #ef4444;
-            font-size: 12px;
-            animation: slideIn 0.3s ease-out;
+            background: rgba(239, 68, 68, 0.2); padding: 5px 15px; border-radius: 4px;
+            border-left: 3px solid #ef4444; font-size: 12px; margin-bottom: 5px;
         }
 
-        @keyframes slideIn {
-            from { opacity: 0; transform: translateX(-20px); }
-            to { opacity: 1; transform: translateX(0); }
-        }
-
-        #dash-cooldown-ui {
-            position: relative;
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: #1e293b;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-right: 15px;
+        input {
+            text-transform: uppercase;
         }
 
         .hidden { display: none !important; }
@@ -158,32 +129,74 @@
 </head>
 <body>
 
-    <div id="menu">
-        <div class="menu-card animate-enter">
+    <!-- 1. TELA DE NICKNAME -->
+    <div id="screen-nick" class="ui-screen">
+        <div class="menu-card">
             <h1 class="text-5xl font-black mb-1 text-emerald-400 italic tracking-tighter">ELITE ARENA</h1>
-            <p class="text-slate-400 text-xs mb-10 uppercase tracking-widest font-bold">Protocolo Warzone Online</p>
-            
-            <div class="space-y-4 mb-8">
-                <input type="text" id="nickname" maxlength="10" placeholder="IDENTIFICAÇÃO" 
-                       class="w-full p-4 bg-slate-950 border-2 border-slate-800 rounded-xl outline-none focus:border-emerald-500 text-center font-bold tracking-widest text-emerald-100 transition-all uppercase">
+            <p class="text-slate-400 text-xs mb-10 uppercase tracking-widest font-bold">Identificação Necessária</p>
+            <input type="text" id="nickname" maxlength="10" placeholder="SEU NOME" 
+                   class="w-full p-4 bg-slate-950 border-2 border-slate-800 rounded-xl outline-none focus:border-emerald-500 text-center font-bold tracking-widest text-emerald-100 transition-all">
+            <button onclick="goToLobby()" class="w-full mt-6 bg-emerald-600 hover:bg-emerald-500 text-white font-black py-5 rounded-xl shadow-[0_6px_0_rgb(5,150,105)] active:translate-y-1 active:shadow-none transition-all">
+                PRÓXIMO
+            </button>
+        </div>
+    </div>
+
+    <!-- 2. LOBBY DE SALAS -->
+    <div id="screen-lobby" class="ui-screen hidden">
+        <div class="menu-card max-w-[600px]">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-white italic">SALAS DISPONÍVEIS</h2>
+                <button onclick="openCreateRoom()" class="bg-emerald-600 text-[10px] font-black px-4 py-2 rounded-lg hover:bg-emerald-500 transition-all">+ CRIAR SALA</button>
             </div>
             
-            <button onclick="deploySoldier()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black py-5 rounded-xl transition-all transform active:scale-95 shadow-[0_6px_0_rgb(5,150,105)] active:shadow-none active:translate-y-1 text-xl tracking-widest">
-                INICIAR DEPLOY
-            </button>
-            
-            <div class="mt-10 grid grid-cols-2 gap-4 text-[10px] text-slate-500 uppercase font-bold">
-                <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">MOVIMENTAÇÃO: WASD</div>
-                <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">MIRAR: MOUSE</div>
-                <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">ATIRAR: CLIQUE</div>
-                <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">DASH: ESPAÇO</div>
+            <div id="room-list" class="max-h-[300px] overflow-y-auto mb-6 pr-2">
+                <p class="text-slate-500 py-10">Buscando servidores...</p>
+            </div>
+
+            <div class="text-[10px] text-slate-500 font-bold uppercase tracking-widest">
+                Soldado Identificado: <span id="display-nick" class="text-emerald-400">---</span>
             </div>
         </div>
     </div>
 
-    <div id="leaderboard">
+    <!-- 3. CRIAR SALA -->
+    <div id="screen-create" class="ui-screen hidden">
+        <div class="menu-card">
+            <h2 class="text-3xl font-black mb-6 text-white italic">NOVA OPERAÇÃO</h2>
+            <div class="space-y-4 text-left">
+                <div>
+                    <label class="text-[10px] text-slate-400 font-bold ml-1">NOME DA SALA</label>
+                    <input type="text" id="new-room-name" placeholder="EX: ARENA ALFA" class="w-full p-4 bg-slate-950 border-2 border-slate-800 rounded-xl outline-none focus:border-emerald-500 text-white font-bold">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="text-[10px] text-slate-400 font-bold ml-1">MAX JOGADORES</label>
+                        <select id="new-room-max" class="w-full p-4 bg-slate-950 border-2 border-slate-800 rounded-xl outline-none focus:border-emerald-500 text-white font-bold appearance-none">
+                            <option value="2">2</option>
+                            <option value="4">4</option>
+                            <option value="6">6</option>
+                            <option value="8" selected>8</option>
+                            <option value="10">10</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-[10px] text-slate-400 font-bold ml-1">SENHA (OPCIONAL)</label>
+                        <input type="password" id="new-room-pass" placeholder="VAZIO" class="w-full p-4 bg-slate-950 border-2 border-slate-800 rounded-xl outline-none focus:border-emerald-500 text-white font-bold">
+                    </div>
+                </div>
+            </div>
+            <div class="flex gap-4 mt-8">
+                <button onclick="backToLobby()" class="flex-1 bg-slate-800 text-white font-black py-4 rounded-xl hover:bg-slate-700 transition-all">CANCELAR</button>
+                <button onclick="createRoomNow()" class="flex-1 bg-emerald-600 text-white font-black py-4 rounded-xl hover:bg-emerald-500 shadow-[0_4px_0_rgb(5,150,105)] active:translate-y-1 transition-all">DEPLOYAR</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- HUD EM JOGO -->
+    <div id="leaderboard" class="hidden">
         <div class="text-[10px] text-emerald-400 font-black uppercase mb-3 border-b border-emerald-500/20 pb-2 flex justify-between">
-            <span>🏆 Ranking Global</span>
+            <span>🏆 Ranking Sala</span>
             <span>Kills</span>
         </div>
         <div id="leaderboard-list" class="space-y-1"></div>
@@ -191,39 +204,28 @@
 
     <div id="kill-feed" class="kill-feed-container"></div>
 
-    <div id="hud">
+    <div id="hud" class="hidden">
         <div class="flex items-end gap-6">
             <div class="hud-panel">
                 <div class="flex justify-between items-center mb-1">
                     <span id="player-name-hud" class="text-xs font-bold text-slate-400 uppercase tracking-tighter">SISTEMAS ONLINE</span>
                     <span id="hp-text" class="text-sm font-black text-emerald-400 italic">100%</span>
                 </div>
-                <div class="hp-bar-outer">
-                    <div id="hp-bar-inner"></div>
-                </div>
+                <div class="hp-bar-outer"><div id="hp-bar-inner"></div></div>
             </div>
-            <div class="hud-panel flex gap-4">
-                <div class="text-center">
-                    <div class="text-[8px] text-slate-500 font-bold uppercase mb-1">Combat Kills</div>
-                    <div id="kills-val" class="text-2xl font-black text-white italic leading-none">0</div>
-                </div>
-            </div>
+            <div class="hud-panel"><div id="kills-val" class="text-2xl font-black text-white italic">0</div></div>
         </div>
-
         <div class="flex items-end gap-3">
-            <div id="dash-cooldown-ui" class="border-2 border-slate-700">
-                <span class="text-[10px] font-bold">SPACE</span>
-            </div>
             <div class="hud-panel flex gap-2" id="weapon-ui">
-                <div class="weapon-slot active" id="w-1">1: PISTOL</div>
-                <div class="weapon-slot" id="w-2">2: SMG</div>
-                <div class="weapon-slot" id="w-3">3: SHOTGUN</div>
-                <div class="weapon-slot" id="w-4">4: SNIPER</div>
+                <div class="weapon-slot active" id="w-1">1</div>
+                <div class="weapon-slot" id="w-2">2</div>
+                <div class="weapon-slot" id="w-3">3</div>
+                <div class="weapon-slot" id="w-4">4</div>
             </div>
-            <div class="hud-panel min-w-[100px] text-right">
-                <div class="text-[8px] text-slate-500 font-bold uppercase mb-1">Munição</div>
+            <div class="hud-panel min-w-[80px] text-right">
                 <div id="ammo-val" class="text-3xl font-black text-emerald-400 italic leading-none">∞</div>
             </div>
+            <button onclick="leaveRoom()" class="hud-panel !bg-red-900/50 hover:bg-red-600 !pointer-events-auto transition-all text-xs font-black">SAIR</button>
         </div>
     </div>
 
@@ -231,20 +233,19 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getDatabase, ref, set, onValue, push, remove, update as firebaseUpdate, onChildAdded } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+        import { getDatabase, ref, set, onValue, push, remove, update as fbUpdate, onChildAdded } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-        // =========================================================================
-        // CONFIGURAÇÃO DO FIREBASE (PASSO 2 E 3)
-        // =========================================================================
+        // CONFIGURAÇÃO FIREBASE
         const firebaseConfig = {
-            apiKey: "AIzaSyD1IOecLLpWh-wKiSSy0XrsorKZDaMUaxM",
-            authDomain: "blocky-fps.firebaseapp.com",
-            projectId: "blocky-fps",
-            storageBucket: "blocky-fps.firebasestorage.app",
-            messagingSenderId: "513239085323",
-            appId: "1:513239085323:web:2290f74dc9bb330388f20e",
-            measurementId: "G-3J1SNCEW8B"
+          apiKey: "AIzaSyD1IOecLLpWh-wKiSSy0XrsorKZDaMUaxM",
+          authDomain: "blocky-fps.firebaseapp.com",
+          projectId: "blocky-fps",
+          storageBucket: "blocky-fps.firebasestorage.app",
+          messagingSenderId: "513239085323",
+          appId: "1:513239085323:web:2290f74dc9bb330388f20e",
+          measurementId: "G-3J1SNCEW8B"
         };
+
 
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
@@ -252,33 +253,28 @@
         const ctx = canvas.getContext('2d');
 
         const WEAPONS = {
-            1: { name: 'Pistol', damage: 20, fireRate: 400, ammo: Infinity, speed: 14, spread: 0.02, recoil: 2, count: 1, color: '#f59e0b' },
-            2: { name: 'SMG', damage: 12, fireRate: 100, ammo: 150, speed: 16, spread: 0.1, recoil: 1.5, count: 1, color: '#10b981' },
-            3: { name: 'Shotgun', damage: 15, fireRate: 800, ammo: 30, speed: 12, spread: 0.4, recoil: 8, count: 6, color: '#ef4444' },
-            4: { name: 'Sniper', damage: 85, fireRate: 1500, ammo: 10, speed: 28, spread: 0, recoil: 15, count: 1, color: '#6366f1' }
+            1: { fireRate: 400, ammo: Infinity, speed: 14, spread: 0.02, recoil: 2, count: 1, color: '#f59e0b', damage: 20 },
+            2: { fireRate: 100, ammo: 150, speed: 16, spread: 0.1, recoil: 1.5, count: 1, color: '#10b981', damage: 12 },
+            3: { fireRate: 800, ammo: 30, speed: 12, spread: 0.4, recoil: 8, count: 6, color: '#ef4444', damage: 15 },
+            4: { fireRate: 1500, ammo: 10, speed: 28, spread: 0, recoil: 15, count: 1, color: '#6366f1', damage: 85 }
         };
 
-        let myId = null;
-        let active = false;
-        let players = {};
-        let projectiles = [];
-        let particles = [];
-        let obstacles = [];
-        let items = {};
+        let myId = null, currentRoomId = null;
+        let players = {}, projectiles = [], particles = [], obstacles = [], items = {};
         const MAP_SIZE = 1500;
-        
         const keys = {};
         let mouseX = 0, mouseY = 0;
 
         let me = {
             x: 0, y: 0, angle: 0, hp: 100, kills: 0, name: "",
             weapon: 1, lastFired: 0, ammo: { 1: Infinity, 2: 150, 3: 30, 4: 10 },
-            dashCooldown: 0, dashActive: 0, dashDir: {x:0, y:0},
-            shake: 0, lastHp: 100, hitFlash: 0
+            dashCooldown: 0, shake: 0, lastHp: 100, hitFlash: 0
         };
 
         let camera = { x: 0, y: 0 };
+        let active = false;
 
+        // --- SISTEMA DE REDIMENSIONAMENTO ---
         function resize() {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
@@ -286,294 +282,253 @@
         window.addEventListener('resize', resize);
         resize();
 
-        window.deploySoldier = () => {
-            const nick = document.getElementById('nickname').value.trim() || "MERCENÁRIO";
+        // --- NAVEGAÇÃO E LOBBY ---
+
+        window.goToLobby = () => {
+            const nick = document.getElementById('nickname').value.trim();
+            if(!nick) return;
             me.name = nick.toUpperCase();
+            document.getElementById('display-nick').innerText = me.name;
+            showScreen('screen-lobby');
+            listenRooms();
+        };
+
+        window.openCreateRoom = () => showScreen('screen-create');
+        window.backToLobby = () => showScreen('screen-lobby');
+
+        function showScreen(id) {
+            document.querySelectorAll('.ui-screen').forEach(s => s.classList.add('hidden'));
+            document.getElementById(id).classList.remove('hidden');
+        }
+
+        function listenRooms() {
+            onValue(ref(db, 'v3/rooms'), (snap) => {
+                const rooms = snap.val() || {};
+                const list = document.getElementById('room-list');
+                list.innerHTML = '';
+                
+                const roomIds = Object.keys(rooms);
+                if(roomIds.length === 0) {
+                    list.innerHTML = '<div class="py-10 text-slate-500 font-bold uppercase">NENHUMA SALA ATIVA. CRIE A PRIMEIRA!</div>';
+                    return;
+                }
+
+                roomIds.forEach(id => {
+                    const room = rooms[id];
+                    const playerCount = room.players ? Object.keys(room.players).length : 0;
+                    const item = document.createElement('div');
+                    item.className = 'room-item';
+                    item.innerHTML = `
+                        <div class="text-left">
+                            <div class="font-black text-white italic">${room.name} ${room.hasPass ? '🔒' : ''}</div>
+                            <div class="text-[10px] text-slate-500 font-bold uppercase">STATUS: COMBATE ATIVO</div>
+                        </div>
+                        <div class="flex items-center gap-4">
+                            <div class="text-right">
+                                <div class="text-xs font-black text-emerald-400">${playerCount}/${room.max}</div>
+                                <div class="text-[8px] text-slate-600 font-bold">JOGADORES</div>
+                            </div>
+                            <button onclick="joinRoom('${id}', ${room.hasPass})" class="bg-white text-slate-900 text-[10px] font-black px-4 py-2 rounded-lg hover:bg-emerald-400 transition-all">ENTRAR</button>
+                        </div>
+                    `;
+                    list.appendChild(item);
+                });
+            });
+        }
+
+        window.createRoomNow = async () => {
+            const rName = document.getElementById('new-room-name').value.trim() || "ARENA ELITE";
+            const rMax = document.getElementById('new-room-max').value;
+            const rPass = document.getElementById('new-room-pass').value;
+            
+            const roomId = Math.random().toString(36).substring(7);
+            const roomRef = ref(db, `v3/rooms/${roomId}`);
+            
+            await set(roomRef, {
+                id: roomId,
+                name: rName.toUpperCase(),
+                max: parseInt(rMax),
+                pass: rPass || null,
+                hasPass: !!rPass,
+                createdAt: Date.now()
+            });
+
+            enterMatch(roomId);
+        };
+
+        window.joinRoom = (id, hasPass) => {
+            if(hasPass) {
+                const p = prompt("ESTA SALA É PRIVADA. INSIRA A SENHA:");
+                onValue(ref(db, `v3/rooms/${id}/pass`), (snap) => {
+                    if(snap.val() === p) enterMatch(id);
+                    else alert("SENHA INCORRETA!");
+                }, { onlyOnce: true });
+            } else {
+                enterMatch(id);
+            }
+        };
+
+        // --- ENTRAR NA PARTIDA ---
+
+        function enterMatch(roomId) {
+            currentRoomId = roomId;
+            myId = Math.random().toString(36).substring(7);
             
             const rad = Math.random() * 100;
             const ang = Math.random() * Math.PI * 2;
-            me.x = rad * Math.cos(ang);
-            me.y = rad * Math.sin(ang);
+            me.x = rad * Math.cos(ang); me.y = rad * Math.sin(ang);
 
-            myId = Math.random().toString(36).substring(7);
-            const pRef = ref(db, `v2/players/${myId}`);
-            
-            set(pRef, {
-                id: myId, name: me.name, x: me.x, y: me.y, 
-                angle: 0, hp: 100, kills: 0, weapon: 1
-            });
+            const pRef = ref(db, `v3/rooms/${currentRoomId}/players/${myId}`);
+            set(pRef, { id: myId, name: me.name, x: me.x, y: me.y, hp: 100, kills: 0, weapon: 1 });
 
-            document.getElementById('menu').style.display = 'none';
+            document.querySelectorAll('.ui-screen').forEach(s => s.classList.add('hidden'));
+            document.getElementById('hud').classList.remove('hidden');
+            document.getElementById('leaderboard').classList.remove('hidden');
             document.getElementById('player-name-hud').innerText = me.name;
+            
             active = true;
-
             window.onbeforeunload = () => remove(pRef);
-            initListeners();
-            generateMapLocal();
+            
+            initGameNetwork();
+            generateObstacles();
             requestAnimationFrame(gameLoop);
-        };
-
-        function generateMapLocal() {
-            obstacles = [];
-            for(let i=0; i<35; i++) {
-                obstacles.push({
-                    x: (Math.random() - 0.5) * (MAP_SIZE * 1.8),
-                    y: (Math.random() - 0.5) * (MAP_SIZE * 1.8),
-                    w: 70 + Math.random() * 100,
-                    h: 70 + Math.random() * 100
-                });
-            }
         }
 
-        function initListeners() {
-            window.addEventListener('keydown', e => {
-                keys[e.code] = true;
-                if(e.code === 'Digit1') switchWeapon(1);
-                if(e.code === 'Digit2') switchWeapon(2);
-                if(e.code === 'Digit3') switchWeapon(3);
-                if(e.code === 'Digit4') switchWeapon(4);
-                if(e.code === 'Space') triggerDash();
-            });
-            window.addEventListener('keyup', e => keys[e.code] = false);
-            window.addEventListener('mousemove', e => { mouseX = e.clientX; mouseY = e.clientY; });
-            window.addEventListener('mousedown', () => keys.MouseDown = true);
-            window.addEventListener('mouseup', () => keys.MouseDown = false);
-
-            onValue(ref(db, 'v2/players'), (snap) => {
+        function initGameNetwork() {
+            onValue(ref(db, `v3/rooms/${currentRoomId}/players`), (snap) => {
                 players = snap.val() || {};
-                updateLeaderboardUI();
-                if(myId && players[myId]) {
-                    if(players[myId].hp < me.lastHp) {
-                        me.hitFlash = 8;
-                        me.shake = 10;
-                    }
-                    me.lastHp = players[myId].hp;
-                    if(players[myId].hp <= 0 && me.hp > 0) handleDeath();
-                    me.kills = players[myId].kills;
-                }
+                updateHUD();
             });
 
-            onChildAdded(ref(db, 'v2/shots'), (snap) => {
+            onChildAdded(ref(db, `v3/rooms/${currentRoomId}/shots`), (snap) => {
                 const s = snap.val();
                 if(s && s.owner !== myId) createProjectile(s, false);
-                remove(ref(db, `v2/shots/${snap.key}`));
+                remove(ref(db, `v3/rooms/${currentRoomId}/shots/${snap.key}`));
             });
 
-            onValue(ref(db, 'v2/items'), (snap) => { items = snap.val() || {}; });
+            onValue(ref(db, `v3/rooms/${currentRoomId}/items`), (snap) => { items = snap.val() || {}; });
         }
 
-        function switchWeapon(id) {
-            me.weapon = id;
-            document.querySelectorAll('.weapon-slot').forEach(s => s.classList.remove('active'));
-            document.getElementById(`w-${id}`).classList.add('active');
-            updateAmmoUI();
-        }
+        window.leaveRoom = () => {
+            if(myId && currentRoomId) {
+                remove(ref(db, `v3/rooms/${currentRoomId}/players/${myId}`));
+                location.reload(); 
+            }
+        };
 
-        function updateAmmoUI() {
-            const val = me.ammo[me.weapon];
-            document.getElementById('ammo-val').innerText = val === Infinity ? '∞' : val;
-        }
+        // --- LÓGICA DE JOGO ---
 
-        function triggerDash() {
-            if(me.dashCooldown > 0 || me.hp <= 0) return;
-            me.dashActive = 10; 
-            me.dashCooldown = 90;
-            let dx = 0, dy = 0;
-            if(keys.KeyW) dy -= 1; if(keys.KeyS) dy += 1;
-            if(keys.KeyA) dx -= 1; if(keys.KeyD) dx += 1;
-            if(dx === 0 && dy === 0) { dx = Math.cos(me.angle); dy = Math.sin(me.angle); }
-            const mag = Math.hypot(dx, dy);
-            me.dashDir = { x: dx/mag, y: dy/mag };
-            spawnParticles(me.x, me.y, '#ffffff', 15);
-        }
-
-        function updateGameLogic() {
+        function updateGame() {
             if(!active || me.hp <= 0) return;
 
-            let moveX = 0, moveY = 0;
-            const speed = me.dashActive > 0 ? 22 : 5.5;
-            
-            if(me.dashActive > 0) {
-                moveX = me.dashDir.x * speed;
-                moveY = me.dashDir.y * speed;
-                me.dashActive--;
-                spawnParticles(me.x, me.y, 'rgba(255,255,255,0.3)', 1);
-            } else {
-                if(keys.KeyW) moveY -= speed; if(keys.KeyS) moveY += speed;
-                if(keys.KeyA) moveX -= speed; if(keys.KeyD) moveX += speed;
-                if(moveX !== 0 && moveY !== 0) { moveX *= 0.707; moveY *= 0.707; }
-            }
+            let mx = 0, my = 0;
+            const speed = keys.Space ? 15 : 5.5;
+            if(keys.KeyW) my -= speed; if(keys.KeyS) my += speed;
+            if(keys.KeyA) mx -= speed; if(keys.KeyD) mx += speed;
+            if(mx !== 0 && my !== 0) { mx *= 0.707; my *= 0.707; }
 
-            const nextX = Math.max(-MAP_SIZE, Math.min(MAP_SIZE, me.x + moveX));
-            const nextY = Math.max(-MAP_SIZE, Math.min(MAP_SIZE, me.y + moveY));
+            const nx = Math.max(-MAP_SIZE, Math.min(MAP_SIZE, me.x + mx));
+            const ny = Math.max(-MAP_SIZE, Math.min(MAP_SIZE, me.y + my));
             
-            let collideX = false, collideY = false;
-            for(const obj of obstacles) {
-                if(checkRectCircle(obj, nextX, me.y, 22)) collideX = true;
-                if(checkRectCircle(obj, me.x, nextY, 22)) collideY = true;
-            }
-
-            if(!collideX) me.x = nextX;
-            if(!collideY) me.y = nextY;
+            let cx = false, cy = false;
+            obstacles.forEach(o => {
+                if(checkCol(o, nx, me.y)) cx = true;
+                if(checkCol(o, me.x, ny)) cy = true;
+            });
+            if(!cx) me.x = nx; if(!cy) me.y = ny;
 
             me.angle = Math.atan2(mouseY - canvas.height/2, mouseX - canvas.width/2);
 
             const w = WEAPONS[me.weapon];
             if(keys.MouseDown && Date.now() - me.lastFired > w.fireRate && me.ammo[me.weapon] > 0) {
-                fireWeapon();
-            }
-
-            if(me.dashCooldown > 0) me.dashCooldown--;
-            if(me.shake > 0) me.shake *= 0.88;
-            if(me.hitFlash > 0) me.hitFlash--;
-
-            for(let id in items) {
-                if(Math.hypot(me.x - items[id].x, me.y - items[id].y) < 40) collectItem(id, items[id]);
-            }
-
-            firebaseUpdate(ref(db, `v2/players/${myId}`), {
-                x: me.x, y: me.y, angle: me.angle, hp: me.hp, weapon: me.weapon
-            });
-
-            camera.x += (me.x - camera.x) * 0.1;
-            camera.y += (me.y - camera.y) * 0.1;
-
-            updateProjectiles();
-            updateParticles();
-        }
-
-        function fireWeapon() {
-            const w = WEAPONS[me.weapon];
-            me.lastFired = Date.now();
-            if(w.ammo !== Infinity) me.ammo[me.weapon]--;
-            updateAmmoUI();
-            me.shake = w.recoil * 1.5;
-
-            for(let i=0; i < w.count; i++) {
-                const spreadAng = me.angle + (Math.random() - 0.5) * w.spread;
-                const shot = {
-                    owner: myId, x: me.x + Math.cos(me.angle)*25, y: me.y + Math.sin(me.angle)*25,
-                    angle: spreadAng, weapon: me.weapon, time: Date.now()
-                };
-                push(ref(db, 'v2/shots'), shot);
-                createProjectile(shot, true);
-            }
-            spawnParticles(me.x + Math.cos(me.angle)*30, me.y + Math.sin(me.angle)*30, '#cbd5e1', 5);
-        }
-
-        function createProjectile(data, isLocal) {
-            const w = WEAPONS[data.weapon];
-            projectiles.push({ ...data, speed: w.speed, damage: w.damage, local: isLocal, dist: 0, color: w.color });
-        }
-
-        function updateProjectiles() {
-            projectiles = projectiles.filter(p => {
-                p.x += Math.cos(p.angle) * p.speed;
-                p.y += Math.sin(p.angle) * p.speed;
-                p.dist += p.speed;
-
-                for(const obj of obstacles) {
-                    if(p.x > obj.x && p.x < obj.x + obj.w && p.y > obj.y && p.y < obj.y + obj.h) {
-                        spawnParticles(p.x, p.y, '#475569', 4);
-                        return false;
-                    }
+                me.lastFired = Date.now();
+                if(w.ammo !== Infinity) me.ammo[me.weapon]--;
+                me.shake = w.recoil * 2;
+                updateAmmoDisplay();
+                
+                for(let i=0; i<w.count; i++){
+                    const shot = { owner: myId, x: me.x, y: me.y, angle: me.angle + (Math.random()-0.5)*w.spread, weapon: me.weapon };
+                    push(ref(db, `v3/rooms/${currentRoomId}/shots`), shot);
+                    createProjectile(shot, true);
                 }
+            }
 
+            fbUpdate(ref(db, `v3/rooms/${currentRoomId}/players/${myId}`), { x: me.x, y: me.y, angle: me.angle, hp: me.hp, weapon: me.weapon });
+            camera.x += (me.x - camera.x) * 0.1; camera.y += (me.y - camera.y) * 0.1;
+            
+            projectiles = projectiles.filter(p => {
+                p.x += Math.cos(p.angle)*p.speed; p.y += Math.sin(p.angle)*p.speed; p.dist += p.speed;
+                for(let o of obstacles) if(p.x > o.x && p.x < o.x+o.w && p.y > o.y && p.y < o.y+o.h) return false;
                 if(p.local) {
                     for(let id in players) {
-                        if(id !== myId && players[id].hp > 0) {
-                            if(Math.hypot(p.x - players[id].x, p.y - players[id].y) < 28) {
-                                damageEnemy(id, p.damage);
-                                spawnParticles(p.x, p.y, '#ef4444', 12);
-                                return false;
-                            }
+                        if(id !== myId && players[id].hp > 0 && Math.hypot(p.x-players[id].x, p.y-players[id].y) < 30) {
+                            damage(id, p.damage); return false;
                         }
                     }
                 }
-                return p.dist < 1400;
+                return p.dist < 1500;
             });
+
+            if(me.shake > 0) me.shake *= 0.9;
         }
 
-        function damageEnemy(id, dmg) {
+        function createProjectile(d, local) {
+            const w = WEAPONS[d.weapon];
+            projectiles.push({ ...d, speed: w.speed, damage: w.damage, local, dist: 0, color: w.color });
+        }
+
+        function damage(id, dmg) {
             const newHp = Math.max(0, players[id].hp - dmg);
-            const up = {};
-            up[`v2/players/${id}/hp`] = newHp;
+            const up = {}; up[`v3/rooms/${currentRoomId}/players/${id}/hp`] = newHp;
             if(newHp === 0 && players[id].hp > 0) {
-                me.kills++;
-                up[`v2/players/${myId}/kills`] = me.kills;
-                notifyKill(me.name, players[id].name);
+                me.kills++; up[`v3/rooms/${currentRoomId}/players/${myId}/kills`] = me.kills;
+                notify(me.name, players[id].name);
             }
-            firebaseUpdate(ref(db), up);
+            fbUpdate(ref(db), up);
         }
 
-        function collectItem(id, item) {
-            if(item.type === 'hp') me.hp = Math.min(100, me.hp + 45);
-            else { me.ammo[2] += 60; me.ammo[3] += 12; me.ammo[4] += 5; updateAmmoUI(); }
-            remove(ref(db, `v2/items/${id}`));
-            spawnParticles(me.x, me.y, item.type === 'hp' ? '#10b981' : '#f59e0b', 25);
+        function checkCol(r, cx, cy) {
+            const x = Math.max(r.x, Math.min(cx, r.x + r.w));
+            const y = Math.max(r.y, Math.min(cy, r.y + r.h));
+            return Math.hypot(cx - x, cy - y) < 22;
+        }
+
+        function updateHUD() {
+            if(!myId || !players[myId]) return;
+            const hp = players[myId].hp;
+            document.getElementById('hp-bar-inner').style.width = hp + '%';
+            document.getElementById('hp-text').innerText = hp + '%';
+            document.getElementById('kills-val').innerText = players[myId].kills;
+            
+            const list = Object.values(players).sort((a,b) => b.kills - a.kills).slice(0, 5);
+            document.getElementById('leaderboard-list').innerHTML = list.map((p, i) => `
+                <div class="flex justify-between text-[10px] ${p.id === myId ? 'text-emerald-400 font-bold' : 'text-slate-400'}">
+                    <span>${i+1}. ${p.name}</span><span>${p.kills}</span>
+                </div>
+            `).join('');
+            if(hp <= 0 && active) handleDeath();
         }
 
         function handleDeath() {
-            active = false; me.hp = 0;
-            spawnParticles(me.x, me.y, '#ef4444', 60);
+            active = false;
             setTimeout(() => {
-                const rad = Math.random() * 120;
-                const ang = Math.random() * Math.PI * 2;
-                me.x = rad * Math.cos(ang); me.y = rad * Math.sin(ang);
-                me.hp = 100; me.lastHp = 100;
-                me.ammo = { 1: Infinity, 2: 150, 3: 30, 4: 10 };
+                me.hp = 100; me.ammo = { 1: Infinity, 2: 150, 3: 30, 4: 10 };
+                const rad = Math.random() * 100; const ang = Math.random() * Math.PI*2;
+                me.x = rad*Math.cos(ang); me.y = rad*Math.sin(ang);
                 active = true;
-                firebaseUpdate(ref(db, `v2/players/${myId}`), { x: me.x, y: me.y, hp: 100 });
-                updateAmmoUI();
+                fbUpdate(ref(db, `v3/rooms/${currentRoomId}/players/${myId}`), { x: me.x, y: me.y, hp: 100 });
+                updateAmmoDisplay();
             }, 3000);
         }
 
-        function spawnParticles(x, y, color, count) {
-            for(let i=0; i<count; i++) {
-                particles.push({
-                    x, y, vx: (Math.random()-0.5)*12, vy: (Math.random()-0.5)*12,
-                    life: 1.0, decay: 0.015+Math.random()*0.03, color: color, size: 3+Math.random()*5
-                });
-            }
+        function updateAmmoDisplay() {
+            const v = me.ammo[me.weapon];
+            document.getElementById('ammo-val').innerText = v === Infinity ? '∞' : v;
         }
 
-        function updateParticles() {
-            particles = particles.filter(p => {
-                p.x += p.vx; p.y += p.vy; p.life -= p.decay;
-                return p.life > 0;
-            });
-        }
-
-        function checkRectCircle(rect, cx, cy, radius) {
-            const cX = Math.max(rect.x, Math.min(cx, rect.x + rect.w));
-            const cY = Math.max(rect.y, Math.min(cy, rect.y + rect.h));
-            return Math.hypot(cx - cX, cy - cY) < radius;
-        }
-
-        function updateLeaderboardUI() {
-            const sorted = Object.values(players).sort((a,b) => (b.kills||0) - (a.kills||0)).slice(0, 10);
-            document.getElementById('leaderboard-list').innerHTML = sorted.map((p, i) => `
-                <div class="flex justify-between items-center text-[10px] ${p.id === myId ? 'text-emerald-400 font-bold' : 'text-slate-400'}">
-                    <span>${i+1}. ${p.name}</span>
-                    <span>${p.kills || 0}</span>
-                </div>
-            `).join('');
-
-            if(myId && players[myId]) {
-                const hp = players[myId].hp;
-                me.hp = hp;
-                const bar = document.getElementById('hp-bar-inner');
-                bar.style.width = hp + '%';
-                document.getElementById('hp-text').innerText = hp + '%';
-                document.getElementById('kills-val').innerText = me.kills;
-                bar.style.background = hp < 30 ? '#ef4444' : (hp < 60 ? '#f59e0b' : '#10b981');
-            }
-        }
-
-        function notifyKill(killer, victim) {
-            const el = document.createElement('div');
-            el.className = 'kill-msg';
-            el.innerHTML = `<span class="font-black text-white">${killer}</span> <span class="text-slate-400 italic">aniquilou</span> <span class="text-red-400">${victim}</span>`;
+        function notify(k, v) {
+            const el = document.createElement('div'); el.className = 'kill-msg';
+            el.innerHTML = `<span class="text-white">${k}</span> <span class="text-slate-500 italic">eliminou</span> <span class="text-red-400">${v}</span>`;
             document.getElementById('kill-feed').appendChild(el);
             setTimeout(() => el.remove(), 4000);
         }
@@ -581,78 +536,58 @@
         function draw() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             ctx.save();
-            const sx = (Math.random()-0.5)*me.shake;
-            const sy = (Math.random()-0.5)*me.shake;
+            const sx = (Math.random()-0.5)*me.shake; const sy = (Math.random()-0.5)*me.shake;
             ctx.translate(canvas.width/2 - camera.x + sx, canvas.height/2 - camera.y + sy);
 
-            // Grid Background
-            ctx.strokeStyle = '#0f172a';
-            ctx.lineWidth = 2;
-            for (let x = -MAP_SIZE; x <= MAP_SIZE; x += 100) { ctx.beginPath(); ctx.moveTo(x, -MAP_SIZE); ctx.lineTo(x, MAP_SIZE); ctx.stroke(); }
-            for (let y = -MAP_SIZE; y <= MAP_SIZE; y += 100) { ctx.beginPath(); ctx.moveTo(-MAP_SIZE, y); ctx.lineTo(MAP_SIZE, y); ctx.stroke(); }
-            ctx.strokeStyle = '#ef4444'; ctx.lineWidth = 15; ctx.strokeRect(-MAP_SIZE, -MAP_SIZE, MAP_SIZE*2, MAP_SIZE*2);
+            ctx.strokeStyle = '#0f172a'; ctx.lineWidth = 2;
+            for(let i=-MAP_SIZE; i<=MAP_SIZE; i+=100) { ctx.beginPath(); ctx.moveTo(i, -MAP_SIZE); ctx.lineTo(i, MAP_SIZE); ctx.stroke(); ctx.beginPath(); ctx.moveTo(-MAP_SIZE, i); ctx.lineTo(MAP_SIZE, i); ctx.stroke(); }
+            ctx.strokeStyle = '#ef4444'; ctx.lineWidth = 10; ctx.strokeRect(-MAP_SIZE, -MAP_SIZE, MAP_SIZE*2, MAP_SIZE*2);
 
-            // Obstacles
-            ctx.fillStyle = '#1e293b'; ctx.strokeStyle = '#334155'; ctx.lineWidth = 4;
-            obstacles.forEach(o => { ctx.fillRect(o.x, o.y, o.w, o.h); ctx.strokeRect(o.x, o.y, o.w, o.h); });
+            ctx.fillStyle = '#1e293b'; obstacles.forEach(o => ctx.fillRect(o.x, o.y, o.w, o.h));
 
-            // Items
-            for(let id in items) {
-                const it = items[id]; ctx.save(); ctx.translate(it.x, it.y); ctx.rotate(Date.now()/400);
-                ctx.fillStyle = it.type === 'hp' ? '#10b981' : '#f59e0b'; ctx.shadowBlur = 20; ctx.shadowColor = ctx.fillStyle;
-                ctx.fillRect(-14, -14, 28, 28); ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.strokeRect(-14, -14, 28, 28); ctx.restore();
-            }
-
-            // Players
-            for(let id in players) { if(id !== myId && players[id].hp > 0) drawSoldier(players[id], false); }
-            if(me.hp > 0) drawSoldier(me, true);
-
-            // Projectiles
-            projectiles.forEach(p => {
-                ctx.save(); ctx.beginPath(); ctx.strokeStyle = p.color; ctx.lineWidth = 5; ctx.lineCap = 'round';
-                ctx.shadowBlur = 10; ctx.shadowColor = p.color; ctx.moveTo(p.x, p.y);
-                ctx.lineTo(p.x - Math.cos(p.angle)*25, p.y - Math.sin(p.angle)*25); ctx.stroke(); ctx.restore();
-            });
-
-            // Particles
-            particles.forEach(p => { ctx.globalAlpha = p.life; ctx.fillStyle = p.color; ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI*2); ctx.fill(); });
+            for(let id in players) if(players[id].hp > 0) drawSoldier(players[id], id === myId);
+            projectiles.forEach(p => { ctx.beginPath(); ctx.strokeStyle = p.color; ctx.lineWidth = 4; ctx.moveTo(p.x, p.y); ctx.lineTo(p.x-Math.cos(p.angle)*20, p.y-Math.sin(p.angle)*20); ctx.stroke(); });
             ctx.restore();
         }
 
         function drawSoldier(p, isMe) {
-            ctx.save();
-            ctx.translate(p.x, p.y);
-            ctx.textAlign = 'center'; ctx.font = 'bold 12px Orbitron'; ctx.fillStyle = isMe ? '#10b981' : '#fff';
-            ctx.fillText(p.name, 0, -45); ctx.fillStyle = '#000'; ctx.fillRect(-22, -40, 44, 6);
-            ctx.fillStyle = p.hp > 30 ? '#10b981' : '#ef4444'; ctx.fillRect(-22, -40, (p.hp/100)*44, 6);
-
-            ctx.rotate(p.angle);
-            const isFlashing = isMe && me.hitFlash > 0;
-            ctx.fillStyle = '#475569';
-            if(p.weapon == 4) ctx.fillRect(20, -6, 50, 12); else ctx.fillRect(20, -5, 30, 10);
-
-            const grad = ctx.createRadialGradient(0,0, 6, 0,0, 24);
-            grad.addColorStop(0, isMe ? '#10b981' : '#ef4444'); grad.addColorStop(1, isMe ? '#064e3b' : '#7f1d1d');
-            ctx.fillStyle = isFlashing ? '#fff' : grad;
-            ctx.beginPath(); ctx.arc(0, 0, 24, 0, Math.PI * 2); ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke();
-            ctx.fillStyle = '#0f172a'; ctx.beginPath(); ctx.arc(12, 9, 6, 0, Math.PI*2); ctx.arc(12, -9, 6, 0, Math.PI*2); ctx.fill();
+            ctx.save(); ctx.translate(p.x, p.y);
+            ctx.textAlign = 'center'; ctx.font = 'bold 10px Orbitron'; ctx.fillStyle = isMe ? '#10b981' : '#fff';
+            ctx.fillText(p.name, 0, -40); ctx.rotate(p.angle);
+            ctx.fillStyle = '#475569'; ctx.fillRect(20, -4, 25, 8);
+            const g = ctx.createRadialGradient(0,0, 5, 0,0, 22);
+            g.addColorStop(0, isMe ? '#10b981' : '#ef4444'); g.addColorStop(1, isMe ? '#064e3b' : '#7f1d1d');
+            ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0,0, 22, 0, Math.PI*2); ctx.fill();
+            ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke();
             ctx.restore();
         }
 
-        function gameLoop() { updateGameLogic(); draw(); requestAnimationFrame(gameLoop); }
+        function generateObstacles() {
+            obstacles = [];
+            for(let i=0; i<30; i++) obstacles.push({ x: (Math.random()-0.5)*MAP_SIZE*1.8, y: (Math.random()-0.5)*MAP_SIZE*1.8, w: 80+Math.random()*100, h: 80+Math.random()*100 });
+        }
 
-        setInterval(() => {
-            if(myId && active && Object.keys(items).length < 10) {
-                if(Math.random() < 0.3) {
-                    const id = Math.random().toString(36).substring(7);
-                    set(ref(db, `v2/items/${id}`), {
-                        id, x: (Math.random()-0.5)*(MAP_SIZE*1.7), y: (Math.random()-0.5)*(MAP_SIZE*1.7),
-                        type: Math.random() > 0.4 ? 'hp' : 'ammo'
-                    });
+        window.addEventListener('keydown', e => {
+            keys[e.code] = true;
+            if(e.code.includes('Digit')) {
+                const d = e.code.replace('Digit','');
+                if(WEAPONS[d]) {
+                    me.weapon = d;
+                    document.querySelectorAll('.weapon-slot').forEach(s => s.classList.remove('active'));
+                    document.getElementById(`w-${d}`).classList.add('active');
+                    updateAmmoDisplay();
                 }
             }
-        }, 3500);
+        });
+        window.addEventListener('keyup', e => keys[e.code] = false);
+        window.addEventListener('mousemove', e => { mouseX = e.clientX; mouseY = e.clientY; });
+        window.addEventListener('mousedown', () => keys.MouseDown = true);
+        window.addEventListener('mouseup', () => keys.MouseDown = false);
 
+        function gameLoop() { if(active) updateGame(); draw(); requestAnimationFrame(gameLoop); }
+
+        // Inicia o canvas ajustado
+        resize();
     </script>
 </body>
 </html>
