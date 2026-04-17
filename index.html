@@ -30,13 +30,6 @@
         }
 
         /* --- UI OVERLAYS --- */
-        .game-overlay {
-            position: absolute;
-            inset: 0;
-            pointer-events: none;
-        }
-
-        /* Menu de Início */
         #menu {
             position: absolute;
             inset: 0;
@@ -59,7 +52,6 @@
             width: 100%;
         }
 
-        /* HUD Principal */
         #hud {
             position: absolute;
             bottom: 30px;
@@ -98,7 +90,6 @@
             box-shadow: 0 0 15px rgba(16, 185, 129, 0.5);
         }
 
-        /* Classificação */
         #leaderboard {
             position: absolute;
             top: 25px;
@@ -150,7 +141,6 @@
             to { opacity: 1; transform: translateX(0); }
         }
 
-        /* Dash Indicator */
         #dash-cooldown-ui {
             position: relative;
             width: 40px;
@@ -162,11 +152,12 @@
             justify-content: center;
             margin-right: 15px;
         }
+
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
 
-    <!-- MENU INICIAL -->
     <div id="menu">
         <div class="menu-card animate-enter">
             <h1 class="text-5xl font-black mb-1 text-emerald-400 italic tracking-tighter">ELITE ARENA</h1>
@@ -190,7 +181,6 @@
         </div>
     </div>
 
-    <!-- HUD EM JOGO -->
     <div id="leaderboard">
         <div class="text-[10px] text-emerald-400 font-black uppercase mb-3 border-b border-emerald-500/20 pb-2 flex justify-between">
             <span>🏆 Ranking Global</span>
@@ -202,7 +192,6 @@
     <div id="kill-feed" class="kill-feed-container"></div>
 
     <div id="hud">
-        <!-- Esquerda: HP e Nome -->
         <div class="flex items-end gap-6">
             <div class="hud-panel">
                 <div class="flex justify-between items-center mb-1">
@@ -221,20 +210,19 @@
             </div>
         </div>
 
-        <!-- Direita: Armas e Munição -->
         <div class="flex items-end gap-3">
             <div id="dash-cooldown-ui" class="border-2 border-slate-700">
                 <span class="text-[10px] font-bold">SPACE</span>
             </div>
             <div class="hud-panel flex gap-2" id="weapon-ui">
-                <div class="weapon-slot" id="w-1">1: PISTOL</div>
+                <div class="weapon-slot active" id="w-1">1: PISTOL</div>
                 <div class="weapon-slot" id="w-2">2: SMG</div>
                 <div class="weapon-slot" id="w-3">3: SHOTGUN</div>
                 <div class="weapon-slot" id="w-4">4: SNIPER</div>
             </div>
             <div class="hud-panel min-w-[100px] text-right">
                 <div class="text-[8px] text-slate-500 font-bold uppercase mb-1">Munição</div>
-                <div id="ammo-val" class="text-3xl font-black text-emerald-400 italic leading-none">30</div>
+                <div id="ammo-val" class="text-3xl font-black text-emerald-400 italic leading-none">∞</div>
             </div>
         </div>
     </div>
@@ -243,34 +231,33 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getDatabase, ref, set, onValue, push, remove, update, onChildAdded, onChildRemoved } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+        import { getDatabase, ref, set, onValue, push, remove, update as firebaseUpdate, onChildAdded } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-        // --- CONFIGURAÇÃO FIREBASE ---
+        // =========================================================================
+        // CONFIGURAÇÃO DO FIREBASE (PASSO 2 E 3)
+        // =========================================================================
         const firebaseConfig = {
-          apiKey: "AIzaSyD1IOecLLpWh-wKiSSy0XrsorKZDaMUaxM",
-          authDomain: "blocky-fps.firebaseapp.com",
-          projectId: "blocky-fps",
-          storageBucket: "blocky-fps.firebasestorage.app",
-          messagingSenderId: "513239085323",
-          appId: "1:513239085323:web:2290f74dc9bb330388f20e",
-          measurementId: "G-3J1SNCEW8B"
+            apiKey: "AIzaSyD1IOecLLpWh-wKiSSy0XrsorKZDaMUaxM",
+            authDomain: "blocky-fps.firebaseapp.com",
+            projectId: "blocky-fps",
+            storageBucket: "blocky-fps.firebasestorage.app",
+            messagingSenderId: "513239085323",
+            appId: "1:513239085323:web:2290f74dc9bb330388f20e",
+            measurementId: "G-3J1SNCEW8B"
         };
 
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
-        
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
 
-        // --- CONSTANTES DE WEAPONS ---
         const WEAPONS = {
             1: { name: 'Pistol', damage: 20, fireRate: 400, ammo: Infinity, speed: 14, spread: 0.02, recoil: 2, count: 1, color: '#f59e0b' },
-            2: { name: 'SMG', damage: 12, fireRate: 100, ammo: 90, speed: 16, spread: 0.1, recoil: 1.5, count: 1, color: '#10b981' },
-            3: { name: 'Shotgun', damage: 15, fireRate: 800, ammo: 24, speed: 12, spread: 0.4, recoil: 8, count: 6, color: '#ef4444' },
-            4: { name: 'Sniper', damage: 85, fireRate: 1500, ammo: 10, speed: 25, spread: 0, recoil: 15, count: 1, color: '#6366f1' }
+            2: { name: 'SMG', damage: 12, fireRate: 100, ammo: 150, speed: 16, spread: 0.1, recoil: 1.5, count: 1, color: '#10b981' },
+            3: { name: 'Shotgun', damage: 15, fireRate: 800, ammo: 30, speed: 12, spread: 0.4, recoil: 8, count: 6, color: '#ef4444' },
+            4: { name: 'Sniper', damage: 85, fireRate: 1500, ammo: 10, speed: 28, spread: 0, recoil: 15, count: 1, color: '#6366f1' }
         };
 
-        // --- ESTADO DO JOGO ---
         let myId = null;
         let active = false;
         let players = {};
@@ -283,18 +270,15 @@
         const keys = {};
         let mouseX = 0, mouseY = 0;
 
-        // Dados Locais do Jogador
         let me = {
             x: 0, y: 0, angle: 0, hp: 100, kills: 0, name: "",
-            weapon: 1, lastFired: 0, ammo: { 1: Infinity, 2: 90, 3: 24, 4: 10 },
+            weapon: 1, lastFired: 0, ammo: { 1: Infinity, 2: 150, 3: 30, 4: 10 },
             dashCooldown: 0, dashActive: 0, dashDir: {x:0, y:0},
-            shake: 0, velX: 0, velY: 0, lastHp: 100, hitFlash: 0
+            shake: 0, lastHp: 100, hitFlash: 0
         };
 
-        // Câmera
-        let camera = { x: 0, y: 0, zoom: 1 };
+        let camera = { x: 0, y: 0 };
 
-        // --- INICIALIZAÇÃO ---
         function resize() {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
@@ -306,7 +290,6 @@
             const nick = document.getElementById('nickname').value.trim() || "MERCENÁRIO";
             me.name = nick.toUpperCase();
             
-            // Spawn em raio de 100px (Pedido pelo utilizador)
             const rad = Math.random() * 100;
             const ang = Math.random() * Math.PI * 2;
             me.x = rad * Math.cos(ang);
@@ -325,7 +308,6 @@
             active = true;
 
             window.onbeforeunload = () => remove(pRef);
-            
             initListeners();
             generateMapLocal();
             requestAnimationFrame(gameLoop);
@@ -333,17 +315,16 @@
 
         function generateMapLocal() {
             obstacles = [];
-            for(let i=0; i<30; i++) {
+            for(let i=0; i<35; i++) {
                 obstacles.push({
-                    x: (Math.random() - 0.5) * (MAP_SIZE * 2),
-                    y: (Math.random() - 0.5) * (MAP_SIZE * 2),
-                    w: 60 + Math.random() * 80,
-                    h: 60 + Math.random() * 80
+                    x: (Math.random() - 0.5) * (MAP_SIZE * 1.8),
+                    y: (Math.random() - 0.5) * (MAP_SIZE * 1.8),
+                    w: 70 + Math.random() * 100,
+                    h: 70 + Math.random() * 100
                 });
             }
         }
 
-        // --- LISTENERS ---
         function initListeners() {
             window.addEventListener('keydown', e => {
                 keys[e.code] = true;
@@ -354,20 +335,17 @@
                 if(e.code === 'Space') triggerDash();
             });
             window.addEventListener('keyup', e => keys[e.code] = false);
-            window.addEventListener('mousemove', e => {
-                mouseX = e.clientX;
-                mouseY = e.clientY;
-            });
+            window.addEventListener('mousemove', e => { mouseX = e.clientX; mouseY = e.clientY; });
             window.addEventListener('mousedown', () => keys.MouseDown = true);
             window.addEventListener('mouseup', () => keys.MouseDown = false);
 
             onValue(ref(db, 'v2/players'), (snap) => {
                 players = snap.val() || {};
-                updateLeaderboard();
+                updateLeaderboardUI();
                 if(myId && players[myId]) {
                     if(players[myId].hp < me.lastHp) {
-                        me.hitFlash = 10;
-                        me.shake = 5;
+                        me.hitFlash = 8;
+                        me.shake = 10;
                     }
                     me.lastHp = players[myId].hp;
                     if(players[myId].hp <= 0 && me.hp > 0) handleDeath();
@@ -377,9 +355,7 @@
 
             onChildAdded(ref(db, 'v2/shots'), (snap) => {
                 const s = snap.val();
-                if(s && s.owner !== myId) {
-                    createProjectile(s, false);
-                }
+                if(s && s.owner !== myId) createProjectile(s, false);
                 remove(ref(db, `v2/shots/${snap.key}`));
             });
 
@@ -388,8 +364,7 @@
 
         function switchWeapon(id) {
             me.weapon = id;
-            const slots = document.querySelectorAll('.weapon-slot');
-            slots.forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.weapon-slot').forEach(s => s.classList.remove('active'));
             document.getElementById(`w-${id}`).classList.add('active');
             updateAmmoUI();
         }
@@ -401,55 +376,47 @@
 
         function triggerDash() {
             if(me.dashCooldown > 0 || me.hp <= 0) return;
-            me.dashActive = 12; 
-            me.dashCooldown = 100;
+            me.dashActive = 10; 
+            me.dashCooldown = 90;
             let dx = 0, dy = 0;
             if(keys.KeyW) dy -= 1; if(keys.KeyS) dy += 1;
             if(keys.KeyA) dx -= 1; if(keys.KeyD) dx += 1;
-            if(dx === 0 && dy === 0) {
-                dx = Math.cos(me.angle); dy = Math.sin(me.angle);
-            }
+            if(dx === 0 && dy === 0) { dx = Math.cos(me.angle); dy = Math.sin(me.angle); }
             const mag = Math.hypot(dx, dy);
             me.dashDir = { x: dx/mag, y: dy/mag };
-            spawnParticles(me.x, me.y, '#ffffff', 12);
+            spawnParticles(me.x, me.y, '#ffffff', 15);
         }
 
-        // --- LÓGICA CORE (Renomeada para evitar conflito com Firebase update) ---
         function updateGameLogic() {
             if(!active || me.hp <= 0) return;
 
             let moveX = 0, moveY = 0;
-            const speed = me.dashActive > 0 ? 18 : 5;
+            const speed = me.dashActive > 0 ? 22 : 5.5;
             
             if(me.dashActive > 0) {
                 moveX = me.dashDir.x * speed;
                 moveY = me.dashDir.y * speed;
                 me.dashActive--;
-                spawnParticles(me.x, me.y, 'rgba(255,255,255,0.2)', 1);
+                spawnParticles(me.x, me.y, 'rgba(255,255,255,0.3)', 1);
             } else {
                 if(keys.KeyW) moveY -= speed; if(keys.KeyS) moveY += speed;
                 if(keys.KeyA) moveX -= speed; if(keys.KeyD) moveX += speed;
-                if(moveX !== 0 && moveY !== 0) {
-                    moveX *= 0.707; moveY *= 0.707;
-                }
+                if(moveX !== 0 && moveY !== 0) { moveX *= 0.707; moveY *= 0.707; }
             }
 
-            // Colisão com Obstáculos e Bordas do Mapa
             const nextX = Math.max(-MAP_SIZE, Math.min(MAP_SIZE, me.x + moveX));
             const nextY = Math.max(-MAP_SIZE, Math.min(MAP_SIZE, me.y + moveY));
             
             let collideX = false, collideY = false;
             for(const obj of obstacles) {
-                if(checkRectCircle(obj, nextX, me.y, 20)) collideX = true;
-                if(checkRectCircle(obj, me.x, nextY, 20)) collideY = true;
+                if(checkRectCircle(obj, nextX, me.y, 22)) collideX = true;
+                if(checkRectCircle(obj, me.x, nextY, 22)) collideY = true;
             }
 
             if(!collideX) me.x = nextX;
             if(!collideY) me.y = nextY;
 
-            const screenCenterX = canvas.width / 2;
-            const screenCenterY = canvas.height / 2;
-            me.angle = Math.atan2(mouseY - screenCenterY, mouseX - screenCenterX);
+            me.angle = Math.atan2(mouseY - canvas.height/2, mouseX - canvas.width/2);
 
             const w = WEAPONS[me.weapon];
             if(keys.MouseDown && Date.now() - me.lastFired > w.fireRate && me.ammo[me.weapon] > 0) {
@@ -457,19 +424,20 @@
             }
 
             if(me.dashCooldown > 0) me.dashCooldown--;
-            if(me.shake > 0) me.shake *= 0.85;
+            if(me.shake > 0) me.shake *= 0.88;
             if(me.hitFlash > 0) me.hitFlash--;
 
             for(let id in items) {
-                const item = items[id];
-                if(Math.hypot(me.x - item.x, me.y - item.y) < 35) collectItem(id, item);
+                if(Math.hypot(me.x - items[id].x, me.y - items[id].y) < 40) collectItem(id, items[id]);
             }
 
-            update(ref(db, `v2/players/${myId}`), {
+            firebaseUpdate(ref(db, `v2/players/${myId}`), {
                 x: me.x, y: me.y, angle: me.angle, hp: me.hp, weapon: me.weapon
             });
 
-            updateCamera();
+            camera.x += (me.x - camera.x) * 0.1;
+            camera.y += (me.y - camera.y) * 0.1;
+
             updateProjectiles();
             updateParticles();
         }
@@ -479,35 +447,23 @@
             me.lastFired = Date.now();
             if(w.ammo !== Infinity) me.ammo[me.weapon]--;
             updateAmmoUI();
-
-            me.shake = w.recoil;
+            me.shake = w.recoil * 1.5;
 
             for(let i=0; i < w.count; i++) {
                 const spreadAng = me.angle + (Math.random() - 0.5) * w.spread;
-                const shotData = {
-                    owner: myId,
-                    x: me.x + Math.cos(me.angle) * 22,
-                    y: me.y + Math.sin(me.angle) * 22,
-                    angle: spreadAng,
-                    weapon: me.weapon,
-                    time: Date.now()
+                const shot = {
+                    owner: myId, x: me.x + Math.cos(me.angle)*25, y: me.y + Math.sin(me.angle)*25,
+                    angle: spreadAng, weapon: me.weapon, time: Date.now()
                 };
-                push(ref(db, 'v2/shots'), shotData);
-                createProjectile(shotData, true);
+                push(ref(db, 'v2/shots'), shot);
+                createProjectile(shot, true);
             }
-            spawnParticles(me.x + Math.cos(me.angle) * 28, me.y + Math.sin(me.angle) * 28, '#cbd5e1', 4);
+            spawnParticles(me.x + Math.cos(me.angle)*30, me.y + Math.sin(me.angle)*30, '#cbd5e1', 5);
         }
 
         function createProjectile(data, isLocal) {
             const w = WEAPONS[data.weapon];
-            projectiles.push({
-                ...data,
-                speed: w.speed,
-                damage: w.damage,
-                local: isLocal,
-                dist: 0,
-                color: w.color
-            });
+            projectiles.push({ ...data, speed: w.speed, damage: w.damage, local: isLocal, dist: 0, color: w.color });
         }
 
         function updateProjectiles() {
@@ -518,7 +474,7 @@
 
                 for(const obj of obstacles) {
                     if(p.x > obj.x && p.x < obj.x + obj.w && p.y > obj.y && p.y < obj.y + obj.h) {
-                        spawnParticles(p.x, p.y, '#475569', 3);
+                        spawnParticles(p.x, p.y, '#475569', 4);
                         return false;
                     }
                 }
@@ -526,97 +482,77 @@
                 if(p.local) {
                     for(let id in players) {
                         if(id !== myId && players[id].hp > 0) {
-                            const enemy = players[id];
-                            if(Math.hypot(p.x - enemy.x, p.y - enemy.y) < 26) {
+                            if(Math.hypot(p.x - players[id].x, p.y - players[id].y) < 28) {
                                 damageEnemy(id, p.damage);
-                                spawnParticles(p.x, p.y, '#ef4444', 10);
+                                spawnParticles(p.x, p.y, '#ef4444', 12);
                                 return false;
                             }
                         }
                     }
                 }
-                return p.dist < 1300;
+                return p.dist < 1400;
             });
         }
 
         function damageEnemy(id, dmg) {
-            const enemy = players[id];
-            const newHp = Math.max(0, enemy.hp - dmg);
-            const updates = {};
-            updates[`v2/players/${id}/hp`] = newHp;
-            if(newHp === 0 && enemy.hp > 0) {
+            const newHp = Math.max(0, players[id].hp - dmg);
+            const up = {};
+            up[`v2/players/${id}/hp`] = newHp;
+            if(newHp === 0 && players[id].hp > 0) {
                 me.kills++;
-                updates[`v2/players/${myId}/kills`] = me.kills;
-                notifyKill(me.name, enemy.name);
+                up[`v2/players/${myId}/kills`] = me.kills;
+                notifyKill(me.name, players[id].name);
             }
-            update(ref(db), updates);
+            firebaseUpdate(ref(db), up);
         }
 
         function collectItem(id, item) {
-            if(item.type === 'hp') me.hp = Math.min(100, me.hp + 50);
-            if(item.type === 'ammo') {
-                me.ammo[2] += 60; me.ammo[3] += 12; me.ammo[4] += 5;
-                updateAmmoUI();
-            }
+            if(item.type === 'hp') me.hp = Math.min(100, me.hp + 45);
+            else { me.ammo[2] += 60; me.ammo[3] += 12; me.ammo[4] += 5; updateAmmoUI(); }
             remove(ref(db, `v2/items/${id}`));
-            spawnParticles(me.x, me.y, item.type === 'hp' ? '#10b981' : '#f59e0b', 20);
+            spawnParticles(me.x, me.y, item.type === 'hp' ? '#10b981' : '#f59e0b', 25);
         }
 
         function handleDeath() {
-            active = false;
-            me.hp = 0;
-            spawnParticles(me.x, me.y, '#ef4444', 50);
+            active = false; me.hp = 0;
+            spawnParticles(me.x, me.y, '#ef4444', 60);
             setTimeout(() => {
-                const rad = Math.random() * 150;
+                const rad = Math.random() * 120;
                 const ang = Math.random() * Math.PI * 2;
-                me.x = rad * Math.cos(ang);
-                me.y = rad * Math.sin(ang);
-                me.hp = 100;
-                me.lastHp = 100;
-                me.ammo = { 1: Infinity, 2: 90, 3: 24, 4: 10 };
+                me.x = rad * Math.cos(ang); me.y = rad * Math.sin(ang);
+                me.hp = 100; me.lastHp = 100;
+                me.ammo = { 1: Infinity, 2: 150, 3: 30, 4: 10 };
                 active = true;
-                update(ref(db, `v2/players/${myId}`), { x: me.x, y: me.y, hp: 100 });
+                firebaseUpdate(ref(db, `v2/players/${myId}`), { x: me.x, y: me.y, hp: 100 });
                 updateAmmoUI();
-            }, 2500);
+            }, 3000);
         }
 
         function spawnParticles(x, y, color, count) {
             for(let i=0; i<count; i++) {
                 particles.push({
-                    x, y,
-                    vx: (Math.random() - 0.5) * 10,
-                    vy: (Math.random() - 0.5) * 10,
-                    life: 1.0,
-                    decay: 0.015 + Math.random() * 0.03,
-                    color: color,
-                    size: 2 + Math.random() * 5
+                    x, y, vx: (Math.random()-0.5)*12, vy: (Math.random()-0.5)*12,
+                    life: 1.0, decay: 0.015+Math.random()*0.03, color: color, size: 3+Math.random()*5
                 });
             }
         }
 
         function updateParticles() {
             particles = particles.filter(p => {
-                p.x += p.vx; p.y += p.vy;
-                p.life -= p.decay;
+                p.x += p.vx; p.y += p.vy; p.life -= p.decay;
                 return p.life > 0;
             });
         }
 
         function checkRectCircle(rect, cx, cy, radius) {
-            const closestX = Math.max(rect.x, Math.min(cx, rect.x + rect.w));
-            const closestY = Math.max(rect.y, Math.min(cy, rect.y + rect.h));
-            return Math.hypot(cx - closestX, cy - closestY) < radius;
+            const cX = Math.max(rect.x, Math.min(cx, rect.x + rect.w));
+            const cY = Math.max(rect.y, Math.min(cy, rect.y + rect.h));
+            return Math.hypot(cx - cX, cy - cY) < radius;
         }
 
-        function updateCamera() {
-            camera.x += (me.x - camera.x) * 0.08;
-            camera.y += (me.y - camera.y) * 0.08;
-        }
-
-        function updateLeaderboard() {
-            const sorted = Object.values(players).sort((a,b) => b.kills - a.kills).slice(0, 10);
-            const list = document.getElementById('leaderboard-list');
-            list.innerHTML = sorted.map((p, i) => `
+        function updateLeaderboardUI() {
+            const sorted = Object.values(players).sort((a,b) => (b.kills||0) - (a.kills||0)).slice(0, 10);
+            document.getElementById('leaderboard-list').innerHTML = sorted.map((p, i) => `
                 <div class="flex justify-between items-center text-[10px] ${p.id === myId ? 'text-emerald-400 font-bold' : 'text-slate-400'}">
                     <span>${i+1}. ${p.name}</span>
                     <span>${p.kills || 0}</span>
@@ -630,176 +566,92 @@
                 bar.style.width = hp + '%';
                 document.getElementById('hp-text').innerText = hp + '%';
                 document.getElementById('kills-val').innerText = me.kills;
-                if(hp < 30) bar.style.background = '#ef4444';
-                else if(hp < 60) bar.style.background = '#f59e0b';
-                else bar.style.background = '#10b981';
+                bar.style.background = hp < 30 ? '#ef4444' : (hp < 60 ? '#f59e0b' : '#10b981');
             }
         }
 
         function notifyKill(killer, victim) {
-            const feed = document.getElementById('kill-feed');
             const el = document.createElement('div');
             el.className = 'kill-msg';
             el.innerHTML = `<span class="font-black text-white">${killer}</span> <span class="text-slate-400 italic">aniquilou</span> <span class="text-red-400">${victim}</span>`;
-            feed.appendChild(el);
+            document.getElementById('kill-feed').appendChild(el);
             setTimeout(() => el.remove(), 4000);
         }
 
-        // --- RENDERIZAÇÃO ---
         function draw() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             ctx.save();
-            const sx = (Math.random() - 0.5) * me.shake;
-            const sy = (Math.random() - 0.5) * me.shake;
+            const sx = (Math.random()-0.5)*me.shake;
+            const sy = (Math.random()-0.5)*me.shake;
             ctx.translate(canvas.width/2 - camera.x + sx, canvas.height/2 - camera.y + sy);
 
-            // Chão e Bordas
-            drawMapBackground();
-
-            // Obstáculos
-            ctx.fillStyle = '#1e293b';
-            ctx.strokeStyle = '#334155';
-            ctx.lineWidth = 3;
-            obstacles.forEach(o => {
-                ctx.fillRect(o.x, o.y, o.w, o.h);
-                ctx.strokeRect(o.x, o.y, o.w, o.h);
-            });
-
-            // Itens
-            for(let id in items) {
-                const it = items[id];
-                ctx.save();
-                ctx.translate(it.x, it.y);
-                ctx.rotate(Date.now() / 500);
-                ctx.fillStyle = it.type === 'hp' ? '#10b981' : '#f59e0b';
-                ctx.shadowBlur = 20;
-                ctx.shadowColor = ctx.fillStyle;
-                ctx.fillRect(-12, -12, 24, 24);
-                ctx.strokeStyle = '#fff';
-                ctx.lineWidth = 2;
-                ctx.strokeRect(-12, -12, 24, 24);
-                ctx.restore();
-            }
-
-            // Jogadores
-            for(let id in players) {
-                if(id === myId || players[id].hp <= 0) continue;
-                drawSoldier(players[id], false);
-            }
-            if(me.hp > 0) drawSoldier(me, true);
-
-            // Projéteis
-            projectiles.forEach(p => {
-                ctx.save();
-                ctx.beginPath();
-                ctx.strokeStyle = p.color;
-                ctx.lineWidth = 4;
-                ctx.lineCap = 'round';
-                ctx.shadowBlur = 10;
-                ctx.shadowColor = p.color;
-                ctx.moveTo(p.x, p.y);
-                ctx.lineTo(p.x - Math.cos(p.angle)*20, p.y - Math.sin(p.angle)*20);
-                ctx.stroke();
-                ctx.restore();
-            });
-
-            // Partículas
-            particles.forEach(p => {
-                ctx.globalAlpha = p.life;
-                ctx.fillStyle = p.color;
-                ctx.beginPath();
-                ctx.arc(p.x, p.y, p.size, 0, Math.PI*2);
-                ctx.fill();
-            });
-
-            ctx.restore();
-        }
-
-        function drawMapBackground() {
-            // Grid
-            const step = 100;
+            // Grid Background
             ctx.strokeStyle = '#0f172a';
             ctx.lineWidth = 2;
-            for (let x = -MAP_SIZE; x <= MAP_SIZE; x += step) {
-                ctx.beginPath(); ctx.moveTo(x, -MAP_SIZE); ctx.lineTo(x, MAP_SIZE); ctx.stroke();
+            for (let x = -MAP_SIZE; x <= MAP_SIZE; x += 100) { ctx.beginPath(); ctx.moveTo(x, -MAP_SIZE); ctx.lineTo(x, MAP_SIZE); ctx.stroke(); }
+            for (let y = -MAP_SIZE; y <= MAP_SIZE; y += 100) { ctx.beginPath(); ctx.moveTo(-MAP_SIZE, y); ctx.lineTo(MAP_SIZE, y); ctx.stroke(); }
+            ctx.strokeStyle = '#ef4444'; ctx.lineWidth = 15; ctx.strokeRect(-MAP_SIZE, -MAP_SIZE, MAP_SIZE*2, MAP_SIZE*2);
+
+            // Obstacles
+            ctx.fillStyle = '#1e293b'; ctx.strokeStyle = '#334155'; ctx.lineWidth = 4;
+            obstacles.forEach(o => { ctx.fillRect(o.x, o.y, o.w, o.h); ctx.strokeRect(o.x, o.y, o.w, o.h); });
+
+            // Items
+            for(let id in items) {
+                const it = items[id]; ctx.save(); ctx.translate(it.x, it.y); ctx.rotate(Date.now()/400);
+                ctx.fillStyle = it.type === 'hp' ? '#10b981' : '#f59e0b'; ctx.shadowBlur = 20; ctx.shadowColor = ctx.fillStyle;
+                ctx.fillRect(-14, -14, 28, 28); ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.strokeRect(-14, -14, 28, 28); ctx.restore();
             }
-            for (let y = -MAP_SIZE; y <= MAP_SIZE; y += step) {
-                ctx.beginPath(); ctx.moveTo(-MAP_SIZE, y); ctx.lineTo(MAP_SIZE, y); ctx.stroke();
-            }
-            // Bordas
-            ctx.strokeStyle = '#ef4444';
-            ctx.lineWidth = 10;
-            ctx.strokeRect(-MAP_SIZE, -MAP_SIZE, MAP_SIZE*2, MAP_SIZE*2);
+
+            // Players
+            for(let id in players) { if(id !== myId && players[id].hp > 0) drawSoldier(players[id], false); }
+            if(me.hp > 0) drawSoldier(me, true);
+
+            // Projectiles
+            projectiles.forEach(p => {
+                ctx.save(); ctx.beginPath(); ctx.strokeStyle = p.color; ctx.lineWidth = 5; ctx.lineCap = 'round';
+                ctx.shadowBlur = 10; ctx.shadowColor = p.color; ctx.moveTo(p.x, p.y);
+                ctx.lineTo(p.x - Math.cos(p.angle)*25, p.y - Math.sin(p.angle)*25); ctx.stroke(); ctx.restore();
+            });
+
+            // Particles
+            particles.forEach(p => { ctx.globalAlpha = p.life; ctx.fillStyle = p.color; ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI*2); ctx.fill(); });
+            ctx.restore();
         }
 
         function drawSoldier(p, isMe) {
             ctx.save();
             ctx.translate(p.x, p.y);
-            
-            // UI do Jogador
-            ctx.textAlign = 'center';
-            ctx.font = 'bold 12px Orbitron';
-            ctx.fillStyle = isMe ? '#10b981' : '#fff';
-            ctx.fillText(p.name, 0, -40);
-            ctx.fillStyle = '#000';
-            ctx.fillRect(-20, -35, 40, 5);
-            ctx.fillStyle = p.hp > 30 ? '#10b981' : '#ef4444';
-            ctx.fillRect(-20, -35, (p.hp/100)*40, 5);
+            ctx.textAlign = 'center'; ctx.font = 'bold 12px Orbitron'; ctx.fillStyle = isMe ? '#10b981' : '#fff';
+            ctx.fillText(p.name, 0, -45); ctx.fillStyle = '#000'; ctx.fillRect(-22, -40, 44, 6);
+            ctx.fillStyle = p.hp > 30 ? '#10b981' : '#ef4444'; ctx.fillRect(-22, -40, (p.hp/100)*44, 6);
 
             ctx.rotate(p.angle);
-            
-            // Feedback de Dano (Flash Branco)
             const isFlashing = isMe && me.hitFlash > 0;
-
-            // Arma
             ctx.fillStyle = '#475569';
-            const w = WEAPONS[p.weapon];
-            ctx.fillRect(18, -4, 25, 8);
-            if(p.weapon == 4) ctx.fillRect(18, -5, 45, 10); 
+            if(p.weapon == 4) ctx.fillRect(20, -6, 50, 12); else ctx.fillRect(20, -5, 30, 10);
 
-            // Corpo
-            const grad = ctx.createRadialGradient(0,0, 5, 0,0, 22);
-            grad.addColorStop(0, isMe ? '#10b981' : '#ef4444');
-            grad.addColorStop(1, isMe ? '#064e3b' : '#7f1d1d');
-            
+            const grad = ctx.createRadialGradient(0,0, 6, 0,0, 24);
+            grad.addColorStop(0, isMe ? '#10b981' : '#ef4444'); grad.addColorStop(1, isMe ? '#064e3b' : '#7f1d1d');
             ctx.fillStyle = isFlashing ? '#fff' : grad;
-            ctx.beginPath();
-            ctx.arc(0, 0, 22, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.strokeStyle = '#fff';
-            ctx.lineWidth = 2;
-            ctx.stroke();
-
-            // Olhos/Visor
-            ctx.fillStyle = '#0f172a';
-            ctx.beginPath();
-            ctx.arc(10, 8, 5, 0, Math.PI*2);
-            ctx.arc(10, -8, 5, 0, Math.PI*2);
-            ctx.fill();
-
+            ctx.beginPath(); ctx.arc(0, 0, 24, 0, Math.PI * 2); ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke();
+            ctx.fillStyle = '#0f172a'; ctx.beginPath(); ctx.arc(12, 9, 6, 0, Math.PI*2); ctx.arc(12, -9, 6, 0, Math.PI*2); ctx.fill();
             ctx.restore();
         }
 
-        function gameLoop() {
-            updateGameLogic();
-            draw();
-            requestAnimationFrame(gameLoop);
-        }
+        function gameLoop() { updateGameLogic(); draw(); requestAnimationFrame(gameLoop); }
 
-        // Criador de Itens Automático
         setInterval(() => {
-            if(myId && active && Object.keys(items).length < 8) {
-                if(Math.random() < 0.2) {
+            if(myId && active && Object.keys(items).length < 10) {
+                if(Math.random() < 0.3) {
                     const id = Math.random().toString(36).substring(7);
                     set(ref(db, `v2/items/${id}`), {
-                        id,
-                        x: (Math.random()-0.5)*(MAP_SIZE*1.8),
-                        y: (Math.random()-0.5)*(MAP_SIZE*1.8),
+                        id, x: (Math.random()-0.5)*(MAP_SIZE*1.7), y: (Math.random()-0.5)*(MAP_SIZE*1.7),
                         type: Math.random() > 0.4 ? 'hp' : 'ammo'
                     });
                 }
             }
-        }, 4000);
+        }, 3500);
 
     </script>
 </body>
