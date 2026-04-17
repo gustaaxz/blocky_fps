@@ -151,7 +151,7 @@
             </div>
             
             <div id="room-list" class="max-h-[300px] overflow-y-auto mb-6 pr-2">
-                <p class="text-slate-500 py-10">Buscando servidores...</p>
+                <p class="text-slate-500 py-10">A procurar servidores...</p>
             </div>
 
             <div class="text-[10px] text-slate-500 font-bold uppercase tracking-widest">
@@ -235,17 +235,24 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getDatabase, ref, set, onValue, push, remove, update as fbUpdate, onChildAdded } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-        // CONFIGURAÇÃO FIREBASE
+        // =========================================================================
+        // ⚠️ CONFIGURAÇÃO OBRIGATÓRIA DO FIREBASE ⚠️
+        // =========================================================================
         const firebaseConfig = {
-          apiKey: "AIzaSyD1IOecLLpWh-wKiSSy0XrsorKZDaMUaxM",
-          authDomain: "blocky-fps.firebaseapp.com",
-          projectId: "blocky-fps",
-          storageBucket: "blocky-fps.firebasestorage.app",
-          messagingSenderId: "513239085323",
-          appId: "1:513239085323:web:2290f74dc9bb330388f20e",
-          measurementId: "G-3J1SNCEW8B"
+            apiKey: "AIzaSyD1IOecLLpWh-wKiSSy0XrsorKZDaMUaxM",
+            authDomain: "blocky-fps.firebaseapp.com",
+            projectId: "blocky-fps",
+            storageBucket: "blocky-fps.firebasestorage.app",
+            messagingSenderId: "513239085323",
+            appId: "1:513239085323:web:2290f74dc9bb330388f20e",
+            measurementId: "G-3J1SNCEW8B",
+            databaseURL: "https://blocky-fps-default-rtdb.firebaseio.com/" 
         };
 
+        // Verificação de Segurança
+        if (firebaseConfig.databaseURL.includes("COLE_AQUI")) {
+            alert("ERRO CRÍTICO: Está a faltar o link do 'databaseURL' no seu código!\n\nVá ao painel do Firebase > Realtime Database e copie o link que aparece no topo.");
+        }
 
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
@@ -274,15 +281,12 @@
         let camera = { x: 0, y: 0 };
         let active = false;
 
-        // --- SISTEMA DE REDIMENSIONAMENTO ---
         function resize() {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
         }
         window.addEventListener('resize', resize);
         resize();
-
-        // --- NAVEGAÇÃO E LOBBY ---
 
         window.goToLobby = () => {
             const nick = document.getElementById('nickname').value.trim();
@@ -309,7 +313,7 @@
                 
                 const roomIds = Object.keys(rooms);
                 if(roomIds.length === 0) {
-                    list.innerHTML = '<div class="py-10 text-slate-500 font-bold uppercase">NENHUMA SALA ATIVA. CRIE A PRIMEIRA!</div>';
+                    list.innerHTML = '<div class="py-10 text-slate-500 font-bold uppercase italic">NENHUMA SALA ATIVA. CRIE A PRIMEIRA!</div>';
                     return;
                 }
 
@@ -321,12 +325,12 @@
                     item.innerHTML = `
                         <div class="text-left">
                             <div class="font-black text-white italic">${room.name} ${room.hasPass ? '🔒' : ''}</div>
-                            <div class="text-[10px] text-slate-500 font-bold uppercase">STATUS: COMBATE ATIVO</div>
+                            <div class="text-[10px] text-slate-500 font-bold uppercase tracking-widest">STATUS: COMBATE EM CURSO</div>
                         </div>
                         <div class="flex items-center gap-4">
                             <div class="text-right">
                                 <div class="text-xs font-black text-emerald-400">${playerCount}/${room.max}</div>
-                                <div class="text-[8px] text-slate-600 font-bold">JOGADORES</div>
+                                <div class="text-[8px] text-slate-600 font-bold">SOLDIERS</div>
                             </div>
                             <button onclick="joinRoom('${id}', ${room.hasPass})" class="bg-white text-slate-900 text-[10px] font-black px-4 py-2 rounded-lg hover:bg-emerald-400 transition-all">ENTRAR</button>
                         </div>
@@ -344,31 +348,34 @@
             const roomId = Math.random().toString(36).substring(7);
             const roomRef = ref(db, `v3/rooms/${roomId}`);
             
-            await set(roomRef, {
-                id: roomId,
-                name: rName.toUpperCase(),
-                max: parseInt(rMax),
-                pass: rPass || null,
-                hasPass: !!rPass,
-                createdAt: Date.now()
-            });
-
-            enterMatch(roomId);
+            try {
+                await set(roomRef, {
+                    id: roomId,
+                    name: rName.toUpperCase(),
+                    max: parseInt(rMax),
+                    pass: rPass || null,
+                    hasPass: !!rPass,
+                    createdAt: Date.now()
+                });
+                enterMatch(roomId);
+            } catch (err) {
+                console.error(err);
+                alert("ERRO AO CRIAR SALA: Verifique se as permissões (Rules) do seu Realtime Database estão no modo de teste (true/true).");
+            }
         };
 
         window.joinRoom = (id, hasPass) => {
             if(hasPass) {
-                const p = prompt("ESTA SALA É PRIVADA. INSIRA A SENHA:");
+                const p = prompt("ESTA SALA EXIGE CÓDIGO DE ACESSO:");
+                if(!p) return;
                 onValue(ref(db, `v3/rooms/${id}/pass`), (snap) => {
                     if(snap.val() === p) enterMatch(id);
-                    else alert("SENHA INCORRETA!");
+                    else alert("CÓDIGO INCORRETO!");
                 }, { onlyOnce: true });
             } else {
                 enterMatch(id);
             }
         };
-
-        // --- ENTRAR NA PARTIDA ---
 
         function enterMatch(roomId) {
             currentRoomId = roomId;
@@ -405,8 +412,6 @@
                 if(s && s.owner !== myId) createProjectile(s, false);
                 remove(ref(db, `v3/rooms/${currentRoomId}/shots/${snap.key}`));
             });
-
-            onValue(ref(db, `v3/rooms/${currentRoomId}/items`), (snap) => { items = snap.val() || {}; });
         }
 
         window.leaveRoom = () => {
@@ -415,8 +420,6 @@
                 location.reload(); 
             }
         };
-
-        // --- LÓGICA DE JOGO ---
 
         function updateGame() {
             if(!active || me.hp <= 0) return;
@@ -586,7 +589,6 @@
 
         function gameLoop() { if(active) updateGame(); draw(); requestAnimationFrame(gameLoop); }
 
-        // Inicia o canvas ajustado
         resize();
     </script>
 </body>
