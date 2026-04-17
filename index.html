@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Arena 2D Multiplayer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
+        
+        body {
+            margin: 0;
+            background-color: #0f172a;
+            color: #f8fafc;
+            font-family: 'Orbitron', sans-serif;
+            overflow: hidden;
+            touch-action: none;
+        }
+
+        canvas {
+            display: block;
+            background-image: 
+                linear-gradient(rgba(30, 41, 59, 0.5) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(30, 41, 59, 0.5) 1px, transparent 1px);
+            background-size: 50px 50px;
+            background-color: #0f172a;
+        }
+
+        #ui-overlay {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            pointer-events: none;
+        }
+
+        .kill-feed {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            text-align: right;
+            color: #ef4444;
+        }
+
+        #menu {
+            position: absolute;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
+
+        .health-bar-container {
+            position: absolute;
+            width: 50px;
+            height: 6px;
+            background: #450a0a;
+            border-radius: 3px;
+        }
+        .health-bar-fill {
+            height: 100%;
+            background: #ef4444;
+            border-radius: 3px;
+            transition: width 0.2s;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="menu">
+        <div class="bg-slate-800 p-8 rounded-2xl border border-slate-700 shadow-2xl text-center max-w-sm">
+            <h1 class="text-3xl font-bold mb-6 text-emerald-400">ARENA 2D</h1>
+            <input type="text" id="nickname" placeholder="Seu Nickname" class="w-full p-3 mb-4 bg-slate-900 border border-slate-600 rounded-lg outline-none focus:border-emerald-500 transition">
+            <button onclick="joinGame()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-lg transition transform active:scale-95">
+                ENTRAR NA BATALHA
+            </button>
+            <p class="mt-4 text-xs text-slate-400">WASD para mover • Mouse para mirar e atirar</p>
+        </div>
+    </div>
+
+    <div id="ui-overlay">
+        <div class="text-2xl font-bold text-emerald-400">Kills: <span id="killCount">0</span></div>
+        <div class="text-sm text-slate-400">HP: <span id="hpValue">100</span></div>
+    </div>
+
+    <div id="kill-feed" class="kill-feed font-bold text-sm"></div>
+
+    <canvas id="gameCanvas"></canvas>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getDatabase, ref, set, onValue, remove, push, onChildAdded } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+        // CONFIGURAÇÃO FIREBASE (Usando Realtime Database para FPS)
+        const firebaseConfig = {
+          apiKey: "AIzaSyD1IOecLLpWh-wKiSSy0XrsorKZDaMUaxM",
+          authDomain: "blocky-fps.firebaseapp.com",
+          projectId: "blocky-fps",
+          storageBucket: "blocky-fps.firebasestorage.app",
+          messagingSenderId: "513239085323",
+          appId: "1:513239085323:web:2290f74dc9bb330388f20e",
+          measurementId: "G-3J1SNCEW8B"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const killFeed = document.getElementById('kill-feed');
+
+        let playerId;
+        let playerRef;
+        let players = {};
+        let bullets = [];
+        let myData = {
+            x: Math.random() * 800,
+            y: Math.random() * 600,
+            angle: 0,
+            hp: 100,
+            kills: 0,
+            name: ""
+        };
+
+        const keys = {};
+
+        // Configurações do Canvas
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        window.joinGame = () => {
+            const name = document.getElementById('nickname').value || "Soldado";
+            myData.name = name;
+            
+            // Gerar ID único para o jogador
+            playerId = Math.random().toString(36).substring(7);
+            playerRef = ref(db, `players/${playerId}`);
+            
+            set(playerRef, myData);
+            document.getElementById('menu').style.display = 'none';
+
+            // Remover ao sair
+            window.onbeforeunload = () => remove(playerRef);
+            
+            gameLoop();
+        };
+
+        // Input Listeners
+        window.addEventListener('keydown', e => keys[e.code] = true);
+        window.addEventListener('keyup', e => keys[e.code] = false);
+        window.addEventListener('mousemove', e => {
+            if (!playerId) return;
+            const dx = e.clientX - canvas.width / 2;
+            const dy = e.clientY - canvas.height / 2;
+            myData.angle = Math.atan2(dy, dx);
+        });
+
+        window.addEventListener('mousedown', () => {
+            if (!playerId || myData.hp <= 0) return;
+            shoot();
+        });
+
+        function shoot() {
+            const bulletRef = push(ref(db, 'bullets'));
+            set(bulletRef, {
+                owner: playerId,
+                x: myData.x,
+                y: myData.y,
+                angle: myData.angle,
+                time: Date.now()
+            });
+        }
+
+        // Sincronização Firebase
+        onValue(ref(db, 'players'), (snapshot) => {
+            players = snapshot.val() || {};
+            if (playerId && players[playerId]) {
+                document.getElementById('killCount').innerText = players[playerId].kills;
+                document.getElementById('hpValue').innerText = players[playerId].hp;
+                if (players[playerId].hp <= 0) {
+                    respawn();
+                }
+            }
+        });
+
+        onChildAdded(ref(db, 'bullets'), (snapshot) => {
+            const b = snapshot.val();
+            bullets.push({ ...b, id: snapshot.key, speed: 10, distance: 0 });
+        });
+
+        function respawn() {
+            myData.hp = 100;
+            myData.x = Math.random() * canvas.width;
+            myData.y = Math.random() * canvas.height;
+            set(playerRef, myData);
+        }
+
+        // Lógica de Atualização
+        function update() {
+            if (!playerId) return;
+
+            const speed = 4;
+            if (keys['KeyW']) myData.y -= speed;
+            if (keys['KeyS']) myData.y += speed;
+            if (keys['KeyA']) myData.x -= speed;
+            if (keys['KeyD']) myData.x += speed;
+
+            // Enviar posição para o Firebase
+            set(playerRef, myData);
+
+            // Atualizar Balas Localmente
+            bullets = bullets.filter(b => {
+                b.x += Math.cos(b.angle) * b.speed;
+                b.y += Math.sin(b.angle) * b.speed;
+                b.distance += b.speed;
+
+                // Colisão (Apenas se eu for o dono da bala, eu calculo o dano no oponente)
+                if (b.owner === playerId) {
+                    for (let id in players) {
+                        if (id !== playerId) {
+                            const p = players[id];
+                            const dist = Math.hypot(b.x - p.x, b.y - p.y);
+                            if (dist < 20) {
+                                damagePlayer(id);
+                                return false;
+                            }
+                        }
+                    }
+                }
+
+                return b.distance < 800;
+            });
+        }
+
+        function damagePlayer(targetId) {
+            const targetRef = ref(db, `players/${targetId}`);
+            const newHp = players[targetId].hp - 20;
+            
+            if (newHp <= 0) {
+                // Ganhei uma Kill
+                myData.kills++;
+                set(playerRef, myData);
+                set(targetRef, { ...players[targetId], hp: 0 });
+                addKillFeed(myData.name, players[targetId].name);
+            } else {
+                update(targetRef, { hp: newHp });
+            }
+        }
+
+        function addKillFeed(killer, victim) {
+            const entry = document.createElement('div');
+            entry.innerText = `${killer} ➔ ${victim}`;
+            killFeed.appendChild(entry);
+            setTimeout(() => entry.remove(), 3000);
+        }
+
+        // Desenho
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Câmera Centralizada em Mim
+            const camX = canvas.width / 2 - myData.x;
+            const camY = canvas.height / 2 - myData.y;
+
+            ctx.save();
+            ctx.translate(camX, camY);
+
+            // Desenhar Jogadores
+            for (let id in players) {
+                const p = players[id];
+                if (p.hp <= 0) continue;
+
+                ctx.save();
+                ctx.translate(p.x, p.y);
+                
+                // Nome
+                ctx.fillStyle = "white";
+                ctx.font = "12px sans-serif";
+                ctx.textAlign = "center";
+                ctx.fillText(p.name, 0, -30);
+
+                // Barra de Vida
+                ctx.fillStyle = "#450a0a";
+                ctx.fillRect(-20, -25, 40, 5);
+                ctx.fillStyle = "#ef4444";
+                ctx.fillRect(-20, -25, (p.hp / 100) * 40, 5);
+
+                // Corpo do Jogador
+                ctx.rotate(p.angle);
+                ctx.fillStyle = id === playerId ? "#10b981" : "#f43f5e";
+                ctx.beginPath();
+                ctx.arc(0, 0, 15, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Arma
+                ctx.fillRect(10, -3, 15, 6);
+                ctx.restore();
+            }
+
+            // Desenhar Balas
+            ctx.fillStyle = "#fbbf24";
+            bullets.forEach(b => {
+                ctx.beginPath();
+                ctx.arc(b.x, b.y, 3, 0, Math.PI * 2);
+                ctx.fill();
+            });
+
+            ctx.restore();
+        }
+
+        function gameLoop() {
+            update();
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+
+    </script>
+</body>
+</html>
