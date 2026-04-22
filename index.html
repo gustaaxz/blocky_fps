@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-PT">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -7,7 +8,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=JetBrains+Mono:wght@400;700&display=swap');
-        
+
         :root {
             --primary: #10b981;
             --danger: #ef4444;
@@ -65,6 +66,7 @@
             margin-bottom: 8px;
             transition: all 0.2s;
         }
+
         .room-item:hover {
             border-color: var(--primary);
             background: rgba(16, 185, 129, 0.1);
@@ -91,42 +93,69 @@
         }
 
         .hp-bar-outer {
-            width: 250px; height: 12px; background: #0f172a;
-            border-radius: 6px; border: 1px solid rgba(255, 255, 255, 0.1);
-            overflow: hidden; margin-top: 5px;
+            width: 250px;
+            height: 12px;
+            background: #0f172a;
+            border-radius: 6px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            overflow: hidden;
+            margin-top: 5px;
         }
 
         #hp-bar-inner {
-            width: 100%; height: 100%;
+            width: 100%;
+            height: 100%;
             background: linear-gradient(90deg, #10b981, #34d399);
             transition: width 0.2s ease-out;
             box-shadow: 0 0 15px rgba(16, 185, 129, 0.5);
         }
 
         #leaderboard {
-            position: absolute; top: 25px; right: 25px;
-            background: rgba(15, 23, 42, 0.85); border: 1px solid rgba(16, 185, 129, 0.3);
-            padding: 15px; border-radius: 12px; min-width: 220px;
+            position: absolute;
+            top: 25px;
+            right: 25px;
+            background: rgba(15, 23, 42, 0.85);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            padding: 15px;
+            border-radius: 12px;
+            min-width: 220px;
         }
 
         .weapon-slot {
-            padding: 8px 12px; border-radius: 8px; background: #1e293b;
-            border: 1px solid #334155; font-size: 10px; color: #94a3b8;
+            padding: 8px 12px;
+            border-radius: 8px;
+            background: #1e293b;
+            border: 1px solid #334155;
+            font-size: 10px;
+            color: #94a3b8;
         }
-        .weapon-slot.active { background: #064e3b; border-color: #10b981; color: white; transform: scale(1.1); }
+
+        .weapon-slot.active {
+            background: #064e3b;
+            border-color: #10b981;
+            color: white;
+            transform: scale(1.1);
+        }
 
         .kill-msg {
-            background: rgba(239, 68, 68, 0.2); padding: 5px 15px; border-radius: 4px;
-            border-left: 3px solid #ef4444; font-size: 12px; margin-bottom: 5px;
+            background: rgba(239, 68, 68, 0.2);
+            padding: 5px 15px;
+            border-radius: 4px;
+            border-left: 3px solid #ef4444;
+            font-size: 12px;
+            margin-bottom: 5px;
         }
 
         input {
             text-transform: uppercase;
         }
 
-        .hidden { display: none !important; }
+        .hidden {
+            display: none !important;
+        }
     </style>
 </head>
+
 <body>
 
     <!-- 1. TELA DE NICKNAME -->
@@ -134,9 +163,10 @@
         <div class="menu-card">
             <h1 class="text-5xl font-black mb-1 text-emerald-400 italic tracking-tighter">ELITE ARENA</h1>
             <p class="text-slate-400 text-xs mb-10 uppercase tracking-widest font-bold">Identificação Necessária</p>
-            <input type="text" id="nickname" maxlength="10" placeholder="SEU NOME" 
-                   class="w-full p-4 bg-slate-950 border-2 border-slate-800 rounded-xl outline-none focus:border-emerald-500 text-center font-bold tracking-widest text-emerald-100 transition-all">
-            <button onclick="goToLobby()" class="w-full mt-6 bg-emerald-600 hover:bg-emerald-500 text-white font-black py-5 rounded-xl shadow-[0_6px_0_rgb(5,150,105)] active:translate-y-1 active:shadow-none transition-all">
+            <input type="text" id="nickname" maxlength="10" placeholder="SEU NOME"
+                class="w-full p-4 bg-slate-950 border-2 border-slate-800 rounded-xl outline-none focus:border-emerald-500 text-center font-bold tracking-widest text-emerald-100 transition-all">
+            <button onclick="goToLobby()"
+                class="w-full mt-6 bg-emerald-600 hover:bg-emerald-500 text-white font-black py-5 rounded-xl shadow-[0_6px_0_rgb(5,150,105)] active:translate-y-1 active:shadow-none transition-all">
                 PRÓXIMO
             </button>
         </div>
@@ -147,9 +177,11 @@
         <div class="menu-card max-w-[600px]">
             <div class="flex justify-between items-center mb-6">
                 <h2 class="text-2xl font-bold text-white italic">SALAS DISPONÍVEIS</h2>
-                <button onclick="openCreateRoom()" class="bg-emerald-600 text-[10px] font-black px-4 py-2 rounded-lg hover:bg-emerald-500 transition-all">+ CRIAR SALA</button>
+                <button onclick="openCreateRoom()"
+                    class="bg-emerald-600 text-[10px] font-black px-4 py-2 rounded-lg hover:bg-emerald-500 transition-all">+
+                    CRIAR SALA</button>
             </div>
-            
+
             <div id="room-list" class="max-h-[300px] overflow-y-auto mb-6 pr-2">
                 <p class="text-slate-500 py-10">A procurar servidores...</p>
             </div>
@@ -167,12 +199,14 @@
             <div class="space-y-4 text-left">
                 <div>
                     <label class="text-[10px] text-slate-400 font-bold ml-1">NOME DA SALA</label>
-                    <input type="text" id="new-room-name" placeholder="EX: ARENA ALFA" class="w-full p-4 bg-slate-950 border-2 border-slate-800 rounded-xl outline-none focus:border-emerald-500 text-white font-bold">
+                    <input type="text" id="new-room-name" placeholder="EX: ARENA ALFA"
+                        class="w-full p-4 bg-slate-950 border-2 border-slate-800 rounded-xl outline-none focus:border-emerald-500 text-white font-bold">
                 </div>
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label class="text-[10px] text-slate-400 font-bold ml-1">MAX JOGADORES</label>
-                        <select id="new-room-max" class="w-full p-4 bg-slate-950 border-2 border-slate-800 rounded-xl outline-none focus:border-emerald-500 text-white font-bold appearance-none">
+                        <select id="new-room-max"
+                            class="w-full p-4 bg-slate-950 border-2 border-slate-800 rounded-xl outline-none focus:border-emerald-500 text-white font-bold appearance-none">
                             <option value="2">2</option>
                             <option value="4">4</option>
                             <option value="6">6</option>
@@ -182,20 +216,24 @@
                     </div>
                     <div>
                         <label class="text-[10px] text-slate-400 font-bold ml-1">SENHA (OPCIONAL)</label>
-                        <input type="password" id="new-room-pass" placeholder="VAZIO" class="w-full p-4 bg-slate-950 border-2 border-slate-800 rounded-xl outline-none focus:border-emerald-500 text-white font-bold">
+                        <input type="password" id="new-room-pass" placeholder="VAZIO"
+                            class="w-full p-4 bg-slate-950 border-2 border-slate-800 rounded-xl outline-none focus:border-emerald-500 text-white font-bold">
                     </div>
                 </div>
             </div>
             <div class="flex gap-4 mt-8">
-                <button onclick="backToLobby()" class="flex-1 bg-slate-800 text-white font-black py-4 rounded-xl hover:bg-slate-700 transition-all">CANCELAR</button>
-                <button onclick="createRoomNow()" class="flex-1 bg-emerald-600 text-white font-black py-4 rounded-xl hover:bg-emerald-500 shadow-[0_4px_0_rgb(5,150,105)] active:translate-y-1 transition-all">DEPLOYAR</button>
+                <button onclick="backToLobby()"
+                    class="flex-1 bg-slate-800 text-white font-black py-4 rounded-xl hover:bg-slate-700 transition-all">CANCELAR</button>
+                <button onclick="createRoomNow()"
+                    class="flex-1 bg-emerald-600 text-white font-black py-4 rounded-xl hover:bg-emerald-500 shadow-[0_4px_0_rgb(5,150,105)] active:translate-y-1 transition-all">DEPLOYAR</button>
             </div>
         </div>
     </div>
 
     <!-- HUD EM JOGO -->
     <div id="leaderboard" class="hidden">
-        <div class="text-[10px] text-emerald-400 font-black uppercase mb-3 border-b border-emerald-500/20 pb-2 flex justify-between">
+        <div
+            class="text-[10px] text-emerald-400 font-black uppercase mb-3 border-b border-emerald-500/20 pb-2 flex justify-between">
             <span>🏆 Ranking Sala</span>
             <span>Kills</span>
         </div>
@@ -208,12 +246,17 @@
         <div class="flex items-end gap-6">
             <div class="hud-panel">
                 <div class="flex justify-between items-center mb-1">
-                    <span id="player-name-hud" class="text-xs font-bold text-slate-400 uppercase tracking-tighter">SISTEMAS ONLINE</span>
+                    <span id="player-name-hud"
+                        class="text-xs font-bold text-slate-400 uppercase tracking-tighter">SISTEMAS ONLINE</span>
                     <span id="hp-text" class="text-sm font-black text-emerald-400 italic">100%</span>
                 </div>
-                <div class="hp-bar-outer"><div id="hp-bar-inner"></div></div>
+                <div class="hp-bar-outer">
+                    <div id="hp-bar-inner"></div>
+                </div>
             </div>
-            <div class="hud-panel"><div id="kills-val" class="text-2xl font-black text-white italic">0</div></div>
+            <div class="hud-panel">
+                <div id="kills-val" class="text-2xl font-black text-white italic">0</div>
+            </div>
         </div>
         <div class="flex items-end gap-3">
             <div class="hud-panel flex gap-2" id="weapon-ui">
@@ -225,7 +268,8 @@
             <div class="hud-panel min-w-[80px] text-right">
                 <div id="ammo-val" class="text-3xl font-black text-emerald-400 italic leading-none">∞</div>
             </div>
-            <button onclick="leaveRoom()" class="hud-panel !bg-red-900/50 hover:bg-red-600 !pointer-events-auto transition-all text-xs font-black">SAIR</button>
+            <button onclick="leaveRoom()"
+                class="hud-panel !bg-red-900/50 hover:bg-red-600 !pointer-events-auto transition-all text-xs font-black">SAIR</button>
         </div>
     </div>
 
@@ -245,8 +289,8 @@
             storageBucket: "blocky-fps.firebasestorage.app",
             messagingSenderId: "513239085323",
             appId: "1:513239085323:web:2290f74dc9bb330388f20e",
-            measurementId: "G-3J1SNCEW8B",
-            databaseURL: "https://blocky-fps-default-rtdb.firebaseio.com/" 
+            // COPIE O LINK DO SEU REALTIME DATABASE E COLE ABAIXO:
+            databaseURL: "https://blocky-fps-default-rtdb.firebaseio.com"
         };
 
         // Verificação de Segurança
@@ -290,7 +334,7 @@
 
         window.goToLobby = () => {
             const nick = document.getElementById('nickname').value.trim();
-            if(!nick) return;
+            if (!nick) return;
             me.name = nick.toUpperCase();
             document.getElementById('display-nick').innerText = me.name;
             showScreen('screen-lobby');
@@ -310,9 +354,9 @@
                 const rooms = snap.val() || {};
                 const list = document.getElementById('room-list');
                 list.innerHTML = '';
-                
+
                 const roomIds = Object.keys(rooms);
-                if(roomIds.length === 0) {
+                if (roomIds.length === 0) {
                     list.innerHTML = '<div class="py-10 text-slate-500 font-bold uppercase italic">NENHUMA SALA ATIVA. CRIE A PRIMEIRA!</div>';
                     return;
                 }
@@ -344,10 +388,10 @@
             const rName = document.getElementById('new-room-name').value.trim() || "ARENA ELITE";
             const rMax = document.getElementById('new-room-max').value;
             const rPass = document.getElementById('new-room-pass').value;
-            
+
             const roomId = Math.random().toString(36).substring(7);
             const roomRef = ref(db, `v3/rooms/${roomId}`);
-            
+
             try {
                 await set(roomRef, {
                     id: roomId,
@@ -365,11 +409,11 @@
         };
 
         window.joinRoom = (id, hasPass) => {
-            if(hasPass) {
+            if (hasPass) {
                 const p = prompt("ESTA SALA EXIGE CÓDIGO DE ACESSO:");
-                if(!p) return;
+                if (!p) return;
                 onValue(ref(db, `v3/rooms/${id}/pass`), (snap) => {
-                    if(snap.val() === p) enterMatch(id);
+                    if (snap.val() === p) enterMatch(id);
                     else alert("CÓDIGO INCORRETO!");
                 }, { onlyOnce: true });
             } else {
@@ -380,7 +424,7 @@
         function enterMatch(roomId) {
             currentRoomId = roomId;
             myId = Math.random().toString(36).substring(7);
-            
+
             const rad = Math.random() * 100;
             const ang = Math.random() * Math.PI * 2;
             me.x = rad * Math.cos(ang); me.y = rad * Math.sin(ang);
@@ -392,10 +436,10 @@
             document.getElementById('hud').classList.remove('hidden');
             document.getElementById('leaderboard').classList.remove('hidden');
             document.getElementById('player-name-hud').innerText = me.name;
-            
+
             active = true;
             window.onbeforeunload = () => remove(pRef);
-            
+
             initGameNetwork();
             generateObstacles();
             requestAnimationFrame(gameLoop);
@@ -409,48 +453,48 @@
 
             onChildAdded(ref(db, `v3/rooms/${currentRoomId}/shots`), (snap) => {
                 const s = snap.val();
-                if(s && s.owner !== myId) createProjectile(s, false);
+                if (s && s.owner !== myId) createProjectile(s, false);
                 remove(ref(db, `v3/rooms/${currentRoomId}/shots/${snap.key}`));
             });
         }
 
         window.leaveRoom = () => {
-            if(myId && currentRoomId) {
+            if (myId && currentRoomId) {
                 remove(ref(db, `v3/rooms/${currentRoomId}/players/${myId}`));
-                location.reload(); 
+                location.reload();
             }
         };
 
         function updateGame() {
-            if(!active || me.hp <= 0) return;
+            if (!active || me.hp <= 0) return;
 
             let mx = 0, my = 0;
             const speed = keys.Space ? 15 : 5.5;
-            if(keys.KeyW) my -= speed; if(keys.KeyS) my += speed;
-            if(keys.KeyA) mx -= speed; if(keys.KeyD) mx += speed;
-            if(mx !== 0 && my !== 0) { mx *= 0.707; my *= 0.707; }
+            if (keys.KeyW) my -= speed; if (keys.KeyS) my += speed;
+            if (keys.KeyA) mx -= speed; if (keys.KeyD) mx += speed;
+            if (mx !== 0 && my !== 0) { mx *= 0.707; my *= 0.707; }
 
             const nx = Math.max(-MAP_SIZE, Math.min(MAP_SIZE, me.x + mx));
             const ny = Math.max(-MAP_SIZE, Math.min(MAP_SIZE, me.y + my));
-            
+
             let cx = false, cy = false;
             obstacles.forEach(o => {
-                if(checkCol(o, nx, me.y)) cx = true;
-                if(checkCol(o, me.x, ny)) cy = true;
+                if (checkCol(o, nx, me.y)) cx = true;
+                if (checkCol(o, me.x, ny)) cy = true;
             });
-            if(!cx) me.x = nx; if(!cy) me.y = ny;
+            if (!cx) me.x = nx; if (!cy) me.y = ny;
 
-            me.angle = Math.atan2(mouseY - canvas.height/2, mouseX - canvas.width/2);
+            me.angle = Math.atan2(mouseY - canvas.height / 2, mouseX - canvas.width / 2);
 
             const w = WEAPONS[me.weapon];
-            if(keys.MouseDown && Date.now() - me.lastFired > w.fireRate && me.ammo[me.weapon] > 0) {
+            if (keys.MouseDown && Date.now() - me.lastFired > w.fireRate && me.ammo[me.weapon] > 0) {
                 me.lastFired = Date.now();
-                if(w.ammo !== Infinity) me.ammo[me.weapon]--;
+                if (w.ammo !== Infinity) me.ammo[me.weapon]--;
                 me.shake = w.recoil * 2;
                 updateAmmoDisplay();
-                
-                for(let i=0; i<w.count; i++){
-                    const shot = { owner: myId, x: me.x, y: me.y, angle: me.angle + (Math.random()-0.5)*w.spread, weapon: me.weapon };
+
+                for (let i = 0; i < w.count; i++) {
+                    const shot = { owner: myId, x: me.x, y: me.y, angle: me.angle + (Math.random() - 0.5) * w.spread, weapon: me.weapon };
                     push(ref(db, `v3/rooms/${currentRoomId}/shots`), shot);
                     createProjectile(shot, true);
                 }
@@ -458,13 +502,13 @@
 
             fbUpdate(ref(db, `v3/rooms/${currentRoomId}/players/${myId}`), { x: me.x, y: me.y, angle: me.angle, hp: me.hp, weapon: me.weapon });
             camera.x += (me.x - camera.x) * 0.1; camera.y += (me.y - camera.y) * 0.1;
-            
+
             projectiles = projectiles.filter(p => {
-                p.x += Math.cos(p.angle)*p.speed; p.y += Math.sin(p.angle)*p.speed; p.dist += p.speed;
-                for(let o of obstacles) if(p.x > o.x && p.x < o.x+o.w && p.y > o.y && p.y < o.y+o.h) return false;
-                if(p.local) {
-                    for(let id in players) {
-                        if(id !== myId && players[id].hp > 0 && Math.hypot(p.x-players[id].x, p.y-players[id].y) < 30) {
+                p.x += Math.cos(p.angle) * p.speed; p.y += Math.sin(p.angle) * p.speed; p.dist += p.speed;
+                for (let o of obstacles) if (p.x > o.x && p.x < o.x + o.w && p.y > o.y && p.y < o.y + o.h) return false;
+                if (p.local) {
+                    for (let id in players) {
+                        if (id !== myId && players[id].hp > 0 && Math.hypot(p.x - players[id].x, p.y - players[id].y) < 30) {
                             damage(id, p.damage); return false;
                         }
                     }
@@ -472,7 +516,7 @@
                 return p.dist < 1500;
             });
 
-            if(me.shake > 0) me.shake *= 0.9;
+            if (me.shake > 0) me.shake *= 0.9;
         }
 
         function createProjectile(d, local) {
@@ -483,7 +527,7 @@
         function damage(id, dmg) {
             const newHp = Math.max(0, players[id].hp - dmg);
             const up = {}; up[`v3/rooms/${currentRoomId}/players/${id}/hp`] = newHp;
-            if(newHp === 0 && players[id].hp > 0) {
+            if (newHp === 0 && players[id].hp > 0) {
                 me.kills++; up[`v3/rooms/${currentRoomId}/players/${myId}/kills`] = me.kills;
                 notify(me.name, players[id].name);
             }
@@ -497,27 +541,27 @@
         }
 
         function updateHUD() {
-            if(!myId || !players[myId]) return;
+            if (!myId || !players[myId]) return;
             const hp = players[myId].hp;
             document.getElementById('hp-bar-inner').style.width = hp + '%';
             document.getElementById('hp-text').innerText = hp + '%';
             document.getElementById('kills-val').innerText = players[myId].kills;
-            
-            const list = Object.values(players).sort((a,b) => b.kills - a.kills).slice(0, 5);
+
+            const list = Object.values(players).sort((a, b) => b.kills - a.kills).slice(0, 5);
             document.getElementById('leaderboard-list').innerHTML = list.map((p, i) => `
                 <div class="flex justify-between text-[10px] ${p.id === myId ? 'text-emerald-400 font-bold' : 'text-slate-400'}">
-                    <span>${i+1}. ${p.name}</span><span>${p.kills}</span>
+                    <span>${i + 1}. ${p.name}</span><span>${p.kills}</span>
                 </div>
             `).join('');
-            if(hp <= 0 && active) handleDeath();
+            if (hp <= 0 && active) handleDeath();
         }
 
         function handleDeath() {
             active = false;
             setTimeout(() => {
                 me.hp = 100; me.ammo = { 1: Infinity, 2: 150, 3: 30, 4: 10 };
-                const rad = Math.random() * 100; const ang = Math.random() * Math.PI*2;
-                me.x = rad*Math.cos(ang); me.y = rad*Math.sin(ang);
+                const rad = Math.random() * 100; const ang = Math.random() * Math.PI * 2;
+                me.x = rad * Math.cos(ang); me.y = rad * Math.sin(ang);
                 active = true;
                 fbUpdate(ref(db, `v3/rooms/${currentRoomId}/players/${myId}`), { x: me.x, y: me.y, hp: 100 });
                 updateAmmoDisplay();
@@ -539,17 +583,17 @@
         function draw() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             ctx.save();
-            const sx = (Math.random()-0.5)*me.shake; const sy = (Math.random()-0.5)*me.shake;
-            ctx.translate(canvas.width/2 - camera.x + sx, canvas.height/2 - camera.y + sy);
+            const sx = (Math.random() - 0.5) * me.shake; const sy = (Math.random() - 0.5) * me.shake;
+            ctx.translate(canvas.width / 2 - camera.x + sx, canvas.height / 2 - camera.y + sy);
 
             ctx.strokeStyle = '#0f172a'; ctx.lineWidth = 2;
-            for(let i=-MAP_SIZE; i<=MAP_SIZE; i+=100) { ctx.beginPath(); ctx.moveTo(i, -MAP_SIZE); ctx.lineTo(i, MAP_SIZE); ctx.stroke(); ctx.beginPath(); ctx.moveTo(-MAP_SIZE, i); ctx.lineTo(MAP_SIZE, i); ctx.stroke(); }
-            ctx.strokeStyle = '#ef4444'; ctx.lineWidth = 10; ctx.strokeRect(-MAP_SIZE, -MAP_SIZE, MAP_SIZE*2, MAP_SIZE*2);
+            for (let i = -MAP_SIZE; i <= MAP_SIZE; i += 100) { ctx.beginPath(); ctx.moveTo(i, -MAP_SIZE); ctx.lineTo(i, MAP_SIZE); ctx.stroke(); ctx.beginPath(); ctx.moveTo(-MAP_SIZE, i); ctx.lineTo(MAP_SIZE, i); ctx.stroke(); }
+            ctx.strokeStyle = '#ef4444'; ctx.lineWidth = 10; ctx.strokeRect(-MAP_SIZE, -MAP_SIZE, MAP_SIZE * 2, MAP_SIZE * 2);
 
             ctx.fillStyle = '#1e293b'; obstacles.forEach(o => ctx.fillRect(o.x, o.y, o.w, o.h));
 
-            for(let id in players) if(players[id].hp > 0) drawSoldier(players[id], id === myId);
-            projectiles.forEach(p => { ctx.beginPath(); ctx.strokeStyle = p.color; ctx.lineWidth = 4; ctx.moveTo(p.x, p.y); ctx.lineTo(p.x-Math.cos(p.angle)*20, p.y-Math.sin(p.angle)*20); ctx.stroke(); });
+            for (let id in players) if (players[id].hp > 0) drawSoldier(players[id], id === myId);
+            projectiles.forEach(p => { ctx.beginPath(); ctx.strokeStyle = p.color; ctx.lineWidth = 4; ctx.moveTo(p.x, p.y); ctx.lineTo(p.x - Math.cos(p.angle) * 20, p.y - Math.sin(p.angle) * 20); ctx.stroke(); });
             ctx.restore();
         }
 
@@ -558,23 +602,23 @@
             ctx.textAlign = 'center'; ctx.font = 'bold 10px Orbitron'; ctx.fillStyle = isMe ? '#10b981' : '#fff';
             ctx.fillText(p.name, 0, -40); ctx.rotate(p.angle);
             ctx.fillStyle = '#475569'; ctx.fillRect(20, -4, 25, 8);
-            const g = ctx.createRadialGradient(0,0, 5, 0,0, 22);
+            const g = ctx.createRadialGradient(0, 0, 5, 0, 0, 22);
             g.addColorStop(0, isMe ? '#10b981' : '#ef4444'); g.addColorStop(1, isMe ? '#064e3b' : '#7f1d1d');
-            ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0,0, 22, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, 0, 22, 0, Math.PI * 2); ctx.fill();
             ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke();
             ctx.restore();
         }
 
         function generateObstacles() {
             obstacles = [];
-            for(let i=0; i<30; i++) obstacles.push({ x: (Math.random()-0.5)*MAP_SIZE*1.8, y: (Math.random()-0.5)*MAP_SIZE*1.8, w: 80+Math.random()*100, h: 80+Math.random()*100 });
+            for (let i = 0; i < 30; i++) obstacles.push({ x: (Math.random() - 0.5) * MAP_SIZE * 1.8, y: (Math.random() - 0.5) * MAP_SIZE * 1.8, w: 80 + Math.random() * 100, h: 80 + Math.random() * 100 });
         }
 
         window.addEventListener('keydown', e => {
             keys[e.code] = true;
-            if(e.code.includes('Digit')) {
-                const d = e.code.replace('Digit','');
-                if(WEAPONS[d]) {
+            if (e.code.includes('Digit')) {
+                const d = e.code.replace('Digit', '');
+                if (WEAPONS[d]) {
                     me.weapon = d;
                     document.querySelectorAll('.weapon-slot').forEach(s => s.classList.remove('active'));
                     document.getElementById(`w-${d}`).classList.add('active');
@@ -587,9 +631,10 @@
         window.addEventListener('mousedown', () => keys.MouseDown = true);
         window.addEventListener('mouseup', () => keys.MouseDown = false);
 
-        function gameLoop() { if(active) updateGame(); draw(); requestAnimationFrame(gameLoop); }
+        function gameLoop() { if (active) updateGame(); draw(); requestAnimationFrame(gameLoop); }
 
         resize();
     </script>
 </body>
+
 </html>
