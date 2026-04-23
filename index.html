@@ -220,6 +220,10 @@
                             class="w-full p-4 bg-slate-950 border-2 border-slate-800 rounded-xl outline-none focus:border-emerald-500 text-white font-bold">
                     </div>
                 </div>
+                <div class="mt-4 flex items-center gap-2">
+                    <input type="checkbox" id="new-room-tdm" class="w-5 h-5 accent-emerald-500">
+                    <label class="text-sm text-slate-300 font-bold">MATA-MATA EM EQUIPE (TDM)</label>
+                </div>
             </div>
             <div class="flex gap-4 mt-8">
                 <button onclick="backToLobby()"
@@ -239,6 +243,19 @@
         </div>
     </div>
 
+    <!-- 5. SCOREBOARD & CHAT -->
+    <div id="tab-scoreboard" class="hidden" style="position: absolute; inset: 10%; background: rgba(15,23,42,0.95); border: 2px solid #10b981; border-radius: 10px; z-index: 2000; padding: 20px; color: white;">
+        <h2 class="text-3xl font-black mb-4 text-emerald-400 italic text-center">PLACAR DE OPERAÇÕES</h2>
+        <div id="tab-list" class="space-y-2"></div>
+    </div>
+
+    <div id="chat-container" class="hidden" style="position: absolute; left: 20px; bottom: 150px; width: 300px; background: rgba(0,0,0,0.5); border-radius: 8px; padding: 10px; pointer-events: auto; z-index: 100;">
+        <div id="chat-messages" style="height: 100px; overflow-y: auto; color: white; font-size: 12px; margin-bottom: 5px; display: flex; flex-direction: column-reverse;"></div>
+        <input type="text" id="chat-input" placeholder="Pressione T para falar..." style="width: 100%; background: rgba(0,0,0,0.8); border: 1px solid #10b981; color: white; padding: 5px; outline: none; border-radius: 4px; font-size: 12px; text-transform: none;">
+    </div>
+    
+    <button onclick="toggleAudio()" id="audio-btn" class="hidden hud-panel !bg-slate-900/50 hover:bg-slate-700 !pointer-events-auto transition-all text-xs font-black" style="position: absolute; top: 20px; left: 20px; z-index: 50;">🔇 AUDIO OFF</button>
+    
     <!-- HUD EM JOGO -->
     <div id="leaderboard" class="hidden">
         <div
@@ -276,7 +293,8 @@
                 <div class="weapon-slot" id="w-5">5</div>
             </div>
             <div class="hud-panel min-w-[80px] text-right flex flex-col justify-center">
-                <div id="ammo-val" class="text-3xl font-black text-emerald-400 italic leading-none">∞</div>
+                <div id="ammo-val" class="text-2xl font-black text-emerald-400 italic leading-none whitespace-nowrap">12 / ∞</div>
+                <div class="text-[10px] text-emerald-400/50 font-black mt-1 uppercase">Munição (R) | Granadas (G): <span id="grenade-val">3</span></div>
             </div>
             <div class="hud-panel min-w-[80px] text-right flex flex-col justify-center">
                 <div class="text-[10px] text-emerald-400 font-black uppercase mb-1 leading-none">TEMPO</div>
@@ -336,15 +354,15 @@
         const ctx = canvas.getContext('2d');
 
         const WEAPONS = {
-            1: { fireRate: 400, ammo: Infinity, speed: 14, spread: 0.02, recoil: 2, count: 1, color: '#f59e0b', damage: 20 },
-            2: { fireRate: 100, ammo: 150, speed: 16, spread: 0.1, recoil: 1.5, count: 1, color: '#10b981', damage: 12 },
-            3: { fireRate: 800, ammo: 30, speed: 12, spread: 0.4, recoil: 8, count: 6, color: '#ef4444', damage: 15 },
-            4: { fireRate: 1500, ammo: 10, speed: 28, spread: 0, recoil: 15, count: 1, color: '#6366f1', damage: 85 },
-            5: { fireRate: 2000, ammo: 5, speed: 4, accel: 1.05, spread: 0, recoil: 20, count: 1, color: '#fbbf24', damage: 100, isAoE: true }
+            1: { fireRate: 400, ammo: Infinity, speed: 14, spread: 0.02, recoil: 2, count: 1, color: '#f59e0b', damage: 20, clip: 12, reload: 1000 },
+            2: { fireRate: 100, ammo: 150, speed: 16, spread: 0.1, recoil: 1.5, count: 1, color: '#10b981', damage: 12, clip: 30, reload: 1500 },
+            3: { fireRate: 800, ammo: 30, speed: 12, spread: 0.4, recoil: 8, count: 6, color: '#ef4444', damage: 15, clip: 6, reload: 2000 },
+            4: { fireRate: 1500, ammo: 10, speed: 28, spread: 0, recoil: 15, count: 1, color: '#6366f1', damage: 85, clip: 5, reload: 2500, laser: true },
+            5: { fireRate: 2000, ammo: 5, speed: 4, accel: 1.05, spread: 0, recoil: 20, count: 1, color: '#fbbf24', damage: 100, isAoE: true, clip: 1, reload: 3000 }
         };
 
         let myId = null, currentRoomId = null;
-        let players = {}, projectiles = [], particles = [], obstacles = [], items = {}, explosions = [];
+        let players = {}, projectiles = [], particles = [], obstacles = [], items = {}, explosions = [], bushes = [], blood = [];
         const MAP_SIZE = 2000;
         const keys = {};
         let mouseX = 0, mouseY = 0;
@@ -352,8 +370,60 @@
         let me = {
             x: 0, y: 0, angle: 0, hp: 100, targetHp: 100, kills: 0, name: "",
             weapon: 1, lastFired: 0, ammo: { 1: Infinity, 2: 150, 3: 30, 4: 10, 5: 5 },
-            dashCooldown: 0, shake: 0, lastHp: 100, hitFlash: 0, killerPos: null
+            clip: { 1: 12, 2: 30, 3: 6, 4: 5, 5: 1 },
+            dashCooldown: 0, dashTimer: 0, dashAngle: 0, reloading: 0, grenades: 3,
+            shake: 0, lastHp: 100, hitFlash: 0, killerPos: null, streak: 0, rank: 'RECRUTA'
         };
+        
+        let myXp = parseInt(localStorage.getItem('blocky_xp') || '0');
+        function getRank(xp) {
+            if (xp > 100) return 'LENDÁRIO';
+            if (xp > 50) return 'GENERAL';
+            if (xp > 20) return 'SARGENTO';
+            if (xp > 5) return 'SOLDADO';
+            return 'RECRUTA';
+        }
+        
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        let audioEnabled = false;
+        window.toggleAudio = () => {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            audioEnabled = !audioEnabled;
+            document.getElementById('audio-btn').innerText = audioEnabled ? '🔊 AUDIO ON' : '🔇 AUDIO OFF';
+            if (audioEnabled && !window.bgmOsc) {
+                window.bgmOsc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                window.bgmOsc.type = 'triangle';
+                window.bgmOsc.frequency.setValueAtTime(60, audioCtx.currentTime);
+                gain.gain.setValueAtTime(0.01, audioCtx.currentTime);
+                window.bgmOsc.connect(gain); gain.connect(audioCtx.destination);
+                window.bgmOsc.start();
+            } else if (!audioEnabled && window.bgmOsc) {
+                window.bgmOsc.stop(); window.bgmOsc = null;
+            }
+        };
+
+        function playSound(type) {
+            if (!audioEnabled || audioCtx.state === 'suspended') return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            const now = audioCtx.currentTime;
+            
+            if (type === 'shoot') {
+                osc.type = 'square'; osc.frequency.setValueAtTime(300, now); osc.frequency.exponentialRampToValueAtTime(100, now + 0.1);
+                gain.gain.setValueAtTime(0.02, now); gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+                osc.start(now); osc.stop(now + 0.1);
+            } else if (type === 'hit') {
+                osc.type = 'sawtooth'; osc.frequency.setValueAtTime(150, now); osc.frequency.exponentialRampToValueAtTime(50, now + 0.2);
+                gain.gain.setValueAtTime(0.05, now); gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+                osc.start(now); osc.stop(now + 0.2);
+            } else if (type === 'explosion') {
+                osc.type = 'sawtooth'; osc.frequency.setValueAtTime(100, now); osc.frequency.exponentialRampToValueAtTime(20, now + 0.5);
+                gain.gain.setValueAtTime(0.1, now); gain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+                osc.start(now); osc.stop(now + 0.5);
+            }
+        }
 
         let camera = { x: 0, y: 0 };
         let active = false;
@@ -444,7 +514,7 @@
                     name: rName.toUpperCase(),
                     max: parseInt(rMax),
                     pass: rPass || null,
-                    hasPass: !!rPass,
+                    hasPass: !!rPass, isTdm: document.getElementById('new-room-tdm').checked,
                     createdAt: Date.now(),
                     startTime: Date.now()
                 });
@@ -468,7 +538,7 @@
             }
         };
 
-        function enterMatch(roomId) {
+        async function enterMatch(roomId) {
             currentRoomId = roomId;
             myId = Math.random().toString(36).substring(7);
 
@@ -481,15 +551,26 @@
             const spawn = getSafeSpawn();
             me.x = spawn.x; me.y = spawn.y;
             me.hp = 100; me.targetHp = 100;
+            const rData = (await get(ref(db, `v3/rooms/${roomId}`))).val();
+            let isTdm = rData.isTdm;
+            window.currentRoomIsTdm = isTdm;
+            if (isTdm) {
+                const count = rData.players ? Object.keys(rData.players).length : 0;
+                me.team = (count % 2 === 0) ? 'BLUE' : 'RED';
+                document.getElementById('player-name-hud').innerText = `[${me.team}] ${me.name}`;
+            }
 
             const pRef = ref(db, `v3/rooms/${currentRoomId}/players/${myId}`);
             onDisconnect(pRef).remove();
-            set(pRef, { id: myId, name: me.name, x: me.x, y: me.y, hp: 100, targetHp: 100, kills: 0, weapon: 1 });
+            set(pRef, { id: myId, name: me.name, x: me.x, y: me.y, hp: 100, targetHp: 100, kills: 0, weapon: 1, team: me.team || 'NONE' });
 
             document.querySelectorAll('.ui-screen').forEach(s => s.classList.add('hidden'));
             document.getElementById('hud').classList.remove('hidden');
             document.getElementById('leaderboard').classList.remove('hidden');
             document.getElementById('player-name-hud').innerText = me.name;
+            document.getElementById('chat-container').classList.remove('hidden');
+            document.getElementById('audio-btn').classList.remove('hidden');
+            me.rank = getRank(myXp);
 
             active = true;
             window.onbeforeunload = () => remove(pRef);
@@ -499,6 +580,12 @@
         }
 
         function initGameNetwork() {
+            onChildAdded(ref(db, `v3/rooms/${currentRoomId}/chat`), (snap) => {
+                const msg = snap.val();
+                const el = document.createElement('div');
+                el.innerHTML = `<span class="font-bold text-emerald-400">${msg.name}:</span> <span class="text-white">${msg.text}</span>`;
+                document.getElementById('chat-messages').prepend(el);
+            });
             onValue(ref(db, `v3/rooms/${currentRoomId}/players`), (snap) => {
                 const data = snap.val() || {};
                 if (myId && data[myId]) {
@@ -517,6 +604,9 @@
                 const s = snap.val();
                 if (s && s.owner !== myId) createProjectile(s, false);
                 remove(ref(db, `v3/rooms/${currentRoomId}/shots/${snap.key}`));
+            });
+            onChildAdded(ref(db, `v3/rooms/${currentRoomId}/blood`), (snap) => {
+                blood.push(snap.val());
             });
         }
 
@@ -557,10 +647,24 @@
             }
 
             let mx = 0, my = 0;
-            const speed = keys.Space ? 15 : 5.5;
-            if (keys.KeyW) my -= speed; if (keys.KeyS) my += speed;
-            if (keys.KeyA) mx -= speed; if (keys.KeyD) mx += speed;
-            if (mx !== 0 && my !== 0) { mx *= 0.707; my *= 0.707; }
+            const speed = 5.5;
+            
+            if (me.dashCooldown > 0) me.dashCooldown--;
+            if (keys.ShiftLeft && me.dashCooldown <= 0) {
+                me.dashCooldown = 120;
+                me.dashTimer = 10;
+                me.dashAngle = Math.atan2(mouseY - canvas.height / 2, mouseX - canvas.width / 2);
+            }
+
+            if (me.dashTimer > 0) {
+                mx = Math.cos(me.dashAngle) * 20;
+                my = Math.sin(me.dashAngle) * 20;
+                me.dashTimer--;
+            } else {
+                if (keys.KeyW) my -= speed; if (keys.KeyS) my += speed;
+                if (keys.KeyA) mx -= speed; if (keys.KeyD) mx += speed;
+                if (mx !== 0 && my !== 0) { mx *= 0.707; my *= 0.707; }
+            }
 
             const nx = Math.max(-MAP_SIZE, Math.min(MAP_SIZE, me.x + mx));
             const ny = Math.max(-MAP_SIZE, Math.min(MAP_SIZE, me.y + my));
@@ -575,9 +679,20 @@
             me.angle = Math.atan2(mouseY - canvas.height / 2, mouseX - canvas.width / 2);
 
             const w = WEAPONS[me.weapon];
-            if (keys.MouseDown && Date.now() - me.lastFired > w.fireRate && me.ammo[me.weapon] > 0) {
+            
+            if (me.reloading > 0) {
+                me.reloading -= 16;
+                if (me.reloading <= 0) {
+                    me.clip[me.weapon] = w.clip;
+                    updateAmmoDisplay();
+                }
+            } else if (keys.KeyR && me.clip[me.weapon] < w.clip && me.ammo[me.weapon] > 0) {
+                me.reloading = w.reload;
+                updateAmmoDisplay();
+            } else if (keys.MouseDown && Date.now() - me.lastFired > w.fireRate && me.ammo[me.weapon] > 0 && me.clip[me.weapon] > 0) {
                 me.lastFired = Date.now();
                 if (w.ammo !== Infinity) me.ammo[me.weapon]--;
+                me.clip[me.weapon]--;
                 me.shake = w.recoil * 2;
                 updateAmmoDisplay();
 
@@ -586,12 +701,136 @@
                     push(ref(db, `v3/rooms/${currentRoomId}/shots`), shot);
                     createProjectile(shot, true);
                 }
+                playSound('shoot');
+                
+                if (me.clip[me.weapon] === 0 && me.ammo[me.weapon] > 0) {
+                    me.reloading = w.reload;
+                    updateAmmoDisplay();
+                }
             }
 
-            fbUpdate(ref(db, `v3/rooms/${currentRoomId}/players/${myId}`), { x: me.x, y: me.y, angle: me.angle, hp: me.hp, weapon: me.weapon });
-            camera.x += (me.x - camera.x) * 0.1; camera.y += (me.y - camera.y) * 0.1;
+            if (keys.KeyG && me.grenades > 0 && Date.now() - (me.lastGrenade||0) > 2000) {
+                me.grenades--;
+                me.lastGrenade = Date.now();
+                const shot = { owner: myId, x: me.x, y: me.y, angle: me.angle, weapon: 'grenade' };
+                push(ref(db, `v3/rooms/${currentRoomId}/shots`), shot);
+                createProjectile(shot, true);
+                updateAmmoDisplay();
+                playSound('shoot');
+            }
+
+                        let inBush = false;
+            for (let b of bushes) if (me.x > b.x && me.x < b.x+b.w && me.y > b.y && me.y < b.y+b.h) inBush = true;
+            fbUpdate(ref(db, `v3/rooms/${currentRoomId}/players/${myId}`), { x: me.x, y: me.y, angle: me.angle, hp: me.hp, weapon: me.weapon, inBush });
+            
+            const lookX = me.x + (mouseX - canvas.width / 2) * 0.4;
+            const lookY = me.y + (mouseY - canvas.height / 2) * 0.4;
+            camera.x += (lookX - camera.x) * 0.1;
+            camera.y += (lookY - camera.y) * 0.1;
+            
+            // Medkits check
+            for (let i of items) {
+                if (i.active && Math.hypot(me.x - i.x, me.y - i.y) < 30) {
+                    i.active = false;
+                    me.targetHp = Math.min(100, me.targetHp + 40);
+                    playSound('reload');
+                }
+            }
+
+            // AI Bots logic
+            const allIds = Object.keys(players).sort();
+            if (allIds[0] === myId) {
+                let botCount = Object.values(players).filter(p => p.isBot).length;
+                let hCount = Object.values(players).filter(p => !p.isBot).length;
+                if (botCount + hCount < 4 && Math.random() < 0.01) {
+                    const bId = 'BOT_' + Math.random().toString(36).substring(7);
+                    const spawn = getSafeSpawn();
+                    let bTeam = 'RED';
+                    if (window.currentRoomIsTdm) {
+                        const tc = Object.values(players).filter(p => p.team === 'RED').length;
+                        bTeam = tc > (botCount+hCount)/2 ? 'BLUE' : 'RED';
+                    }
+                    set(ref(db, `v3/rooms/${currentRoomId}/players/${bId}`), {
+                        id: bId, name: 'CYBORG', x: spawn.x, y: spawn.y, angle: 0, hp: 100, targetHp: 100, kills: 0, weapon: 2, isBot: true, team: bTeam
+                    });
+                }
+                
+                for (let id in players) {
+                    const p = players[id];
+                    if (p.isBot && p.hp > 0) {
+                        let nearest = null; let minDist = Infinity;
+                        for (let hid in players) {
+                            if (players[hid].hp > 0 && id !== hid && (!window.currentRoomIsTdm || players[hid].team !== p.team)) {
+                                let d = Math.hypot(p.x - players[hid].x, p.y - players[hid].y);
+                                if (d < minDist) { minDist = d; nearest = players[hid]; }
+                            }
+                        }
+                        if (nearest) {
+                            let ang = Math.atan2(nearest.y - p.y, nearest.x - p.x);
+                            let nx = p.x + Math.cos(ang) * 4.5;
+                            let ny = p.y + Math.sin(ang) * 4.5;
+                            let cx = false, cy = false;
+                            obstacles.forEach(o => {
+                                if (checkCol(o, nx, p.y)) cx = true;
+                                if (checkCol(o, p.x, ny)) cy = true;
+                            });
+                            if (!cx) p.x = nx; else p.y += (Math.random()-0.5)*15;
+                            if (!cy) p.y = ny; else p.x += (Math.random()-0.5)*15;
+                            
+                            p.angle = ang;
+                            if (minDist < 600 && Math.random() < 0.04) {
+                                const shot = { owner: id, x: p.x, y: p.y, angle: p.angle + (Math.random()-0.5)*0.2, weapon: p.weapon };
+                                push(ref(db, `v3/rooms/${currentRoomId}/shots`), shot);
+                            }
+                            fbUpdate(ref(db, `v3/rooms/${currentRoomId}/players/${id}`), { x: p.x, y: p.y, angle: p.angle });
+                        }
+                    } else if (p.isBot && p.hp <= 0 && p.targetHp <= 0 && !p.respawning) {
+                        fbUpdate(ref(db, `v3/rooms/${currentRoomId}/players/${id}`), { targetHp: 100, respawning: true });
+                        setTimeout(() => {
+                           if(active) {
+                               const spawn = getSafeSpawn();
+                               fbUpdate(ref(db, `v3/rooms/${currentRoomId}/players/${id}`), { x: spawn.x, y: spawn.y, hp: 100, targetHp: 100, respawning: false });
+                           }
+                        }, 3000);
+                    }
+                }
+            }
 
             projectiles = projectiles.filter(p => {
+                if (p.weapon === 'grenade') {
+                    p.x += Math.cos(p.angle) * p.speed;
+                    p.y += Math.sin(p.angle) * p.speed;
+                    p.speed *= 0.95;
+                    p.timer--;
+                    
+                    for (let i = obstacles.length - 1; i >= 0; i--) {
+                        let o = obstacles[i];
+                        if (p.x > o.x && p.x < o.x + o.w && p.y > o.y && p.y < o.y + o.h) {
+                            if (o.destructible) { o.hp -= 50; if(o.hp<=0) obstacles.splice(i,1); }
+                            p.angle += Math.PI / 2;
+                            p.x += Math.cos(p.angle) * p.speed * 2;
+                            p.y += Math.sin(p.angle) * p.speed * 2;
+                        }
+                    }
+                    
+                    if (p.timer <= 0) {
+                        createExplosion(p.x, p.y, 200); playSound('explosion');
+                        if (p.local) {
+                            for (let id in players) {
+                                if (players[id].hp > 0) {
+                                    const dist = Math.hypot(p.x - players[id].x, p.y - players[id].y);
+                                    if (dist < 200) {
+                                        const dmg = 150 * (1 - dist / 200);
+                                        if (id !== myId) damage(id, dmg, p.x, p.y);
+                                        else me.targetHp = Math.max(0, me.targetHp - dmg);
+                                    }
+                                }
+                            }
+                        }
+                        return false;
+                    }
+                    return true;
+                }
                 const w = WEAPONS[p.weapon];
                 if (w.accel) p.speed *= w.accel;
                 
@@ -600,8 +839,17 @@
                 p.dist += p.speed;
                 
                 let hitObstacle = false;
-                for (let o of obstacles) {
+                for (let i = obstacles.length - 1; i >= 0; i--) {
+                    let o = obstacles[i];
                     if (p.x > o.x && p.x < o.x + o.w && p.y > o.y && p.y < o.y + o.h) {
+                        if (o.destructible) {
+                            o.hp -= p.damage;
+                            if (o.hp <= 0) {
+                                explosions.push({x: o.x+o.w/2, y: o.y+o.h/2, r: 0, maxR: o.w, alpha: 1});
+                                obstacles.splice(i, 1);
+                                playSound('explosion');
+                            }
+                        }
                         hitObstacle = true; break;
                     }
                 }
@@ -621,7 +869,7 @@
 
                 if (hitObstacle || hitPlayer || p.dist > 1500) {
                     if (w.isAoE) {
-                        createExplosion(p.x, p.y, 150);
+                        createExplosion(p.x, p.y, 150); playSound('explosion');
                         if (p.local) {
                             for (let id in players) {
                                 if (players[id].hp > 0) {
@@ -648,6 +896,10 @@
         }
 
         function createProjectile(d, local) {
+            if (d.weapon === 'grenade') {
+                projectiles.push({ ...d, speed: 12, timer: 120, local, color: '#10b981' });
+                return;
+            }
             const w = WEAPONS[d.weapon];
             projectiles.push({ ...d, speed: w.speed, damage: w.damage, local, dist: 0, color: w.color });
         }
@@ -658,11 +910,19 @@
                 if (!snap.exists()) return;
                 const p = snap.val();
                 const currentTarget = p.targetHp !== undefined ? p.targetHp : p.hp;
+                if (window.currentRoomIsTdm && p.team === me.team && id !== myId) return;
                 const newTarget = Math.max(0, currentTarget - dmg);
+                push(ref(db, `v3/rooms/${currentRoomId}/blood`), {x: p.x, y: p.y});
                 const up = { targetHp: newTarget };
                 if (newTarget === 0 && currentTarget > 0) {
                     me.kills++; 
-                    fbUpdate(ref(db, `v3/rooms/${currentRoomId}/players/${myId}`), { kills: me.kills });
+                    myXp++; localStorage.setItem('blocky_xp', myXp);
+                    me.rank = getRank(myXp);
+                    me.streak++;
+                    if (me.streak === 3) push(ref(db, `v3/rooms/${currentRoomId}/chat`), { name: 'SISTEMA', text: `${me.name} ESTÁ IMPARÁVEL (3 KILLS)!` });
+                    if (me.streak === 5) push(ref(db, `v3/rooms/${currentRoomId}/chat`), { name: 'SISTEMA', text: `${me.name} É UM DEUS DA GUERRA (5 KILLS)!` });
+                    
+                    fbUpdate(ref(db, `v3/rooms/${currentRoomId}/players/${myId}`), { kills: me.kills, rank: me.rank });
                     notify(me.name, p.name);
                     up.killerX = sourceX;
                     up.killerY = sourceY;
@@ -695,7 +955,7 @@
 
         function handleDeath() {
             active = false;
-            me.hp = 0;
+            me.hp = 0; me.streak = 0;
             updateHUD();
             
             let counter = 5;
@@ -730,7 +990,9 @@
 
         function updateAmmoDisplay() {
             const v = me.ammo[me.weapon];
-            document.getElementById('ammo-val').innerText = v === Infinity ? '∞' : v;
+            let txt = `${me.clip[me.weapon]} / ${v === Infinity ? '∞' : v}`;
+            if (me.reloading > 0) txt = "RECARREGANDO...";
+            document.getElementById('ammo-val').innerText = txt;
         }
 
         function notify(k, v) {
@@ -750,9 +1012,32 @@
             for (let i = -MAP_SIZE; i <= MAP_SIZE; i += 100) { ctx.beginPath(); ctx.moveTo(i, -MAP_SIZE); ctx.lineTo(i, MAP_SIZE); ctx.stroke(); ctx.beginPath(); ctx.moveTo(-MAP_SIZE, i); ctx.lineTo(MAP_SIZE, i); ctx.stroke(); }
             ctx.strokeStyle = '#ef4444'; ctx.lineWidth = 10; ctx.strokeRect(-MAP_SIZE, -MAP_SIZE, MAP_SIZE * 2, MAP_SIZE * 2);
 
-            ctx.fillStyle = '#1e293b'; obstacles.forEach(o => ctx.fillRect(o.x, o.y, o.w, o.h));
+            obstacles.forEach(o => {
+                if (o.destructible) { ctx.fillStyle = '#854d0e'; ctx.fillRect(o.x, o.y, o.w, o.h); }
+                else { ctx.fillStyle = '#1e293b'; ctx.fillRect(o.x, o.y, o.w, o.h); }
+            });
+            items.forEach(i => {
+                if(i.active) {
+                    ctx.fillStyle = '#ffffff'; ctx.fillRect(i.x-15, i.y-15, 30, 30);
+                    ctx.fillStyle = '#ef4444'; ctx.fillRect(i.x-10, i.y-4, 20, 8); ctx.fillRect(i.x-4, i.y-10, 8, 20);
+                }
+            });
+            ctx.fillStyle = 'rgba(34, 197, 94, 0.3)'; bushes.forEach(b => ctx.fillRect(b.x, b.y, b.w, b.h));
+            ctx.fillStyle = 'rgba(185, 28, 28, 0.6)'; blood.forEach(b => { ctx.beginPath(); ctx.arc(b.x, b.y, 10, 0, Math.PI*2); ctx.fill(); });
 
-            for (let id in players) if (players[id].hp > 0) drawSoldier(players[id], id === myId);
+
+            for (let id in players) if (players[id].hp > 0) {
+                drawSoldier(players[id], id === myId);
+                const w = WEAPONS[players[id].weapon];
+                if (w && w.laser) {
+                    ctx.beginPath();
+                    ctx.strokeStyle = 'rgba(239, 68, 68, 0.4)';
+                    ctx.lineWidth = 1.5;
+                    ctx.moveTo(players[id].x, players[id].y);
+                    ctx.lineTo(players[id].x + Math.cos(players[id].angle) * 1500, players[id].y + Math.sin(players[id].angle) * 1500);
+                    ctx.stroke();
+                }
+            }
             
             projectiles.forEach(p => { 
                 ctx.beginPath(); 
@@ -769,16 +1054,65 @@
                 if (e.alpha <= 0) return false;
                 ctx.beginPath();
                 ctx.arc(e.x, e.y, e.r, 0, Math.PI * 2);
-                ctx.fillStyle = `rgba(251, 191, 36, ${e.alpha})`; // color matching bazooka
+                ctx.fillStyle = `rgba(251, 191, 36, ${e.alpha})`;
                 ctx.fill();
                 return true;
             });
+            
+            // Draw Zone
+            let zoneRadius = MAP_SIZE * 2;
+            if (roomStartTime) {
+                const elapsed = Date.now() - roomStartTime;
+                zoneRadius = Math.max(200, MAP_SIZE * 1.5 - (elapsed / 1000) * 2);
+                ctx.beginPath();
+                ctx.arc(0, 0, zoneRadius, 0, Math.PI * 2);
+                ctx.strokeStyle = '#ef4444'; ctx.lineWidth = 10; ctx.stroke();
+                ctx.fillStyle = 'rgba(239, 68, 68, 0.1)';
+                ctx.fillRect(-MAP_SIZE*2, -MAP_SIZE*2, MAP_SIZE*4, MAP_SIZE*4);
+                ctx.globalCompositeOperation = 'destination-out';
+                ctx.fill();
+                ctx.globalCompositeOperation = 'source-over';
+                
+                if (active && Math.hypot(me.x, me.y) > zoneRadius && Math.random() < 0.1) {
+                    me.targetHp -= 1; // Gas damage
+                }
+            }
+            
+            // Weather (Snow)
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+            for (let i = 0; i < 200; i++) {
+                ctx.fillRect(camera.x - canvas.width/2 + Math.random()*canvas.width, camera.y - canvas.height/2 + ((Date.now()/10 + i*100) % canvas.height), 2, 2);
+            }
 
+            ctx.restore();
+            
+            // Draw Minimap
+            ctx.save();
+            ctx.translate(canvas.width - 170, 20);
+            ctx.fillStyle = 'rgba(15, 23, 42, 0.8)';
+            ctx.fillRect(0, 0, 150, 150);
+            ctx.strokeStyle = '#10b981'; ctx.strokeRect(0, 0, 150, 150);
+            ctx.scale(150 / (MAP_SIZE * 2), 150 / (MAP_SIZE * 2));
+            ctx.translate(MAP_SIZE, MAP_SIZE);
+            ctx.fillStyle = '#475569';
+            obstacles.forEach(o => ctx.fillRect(o.x, o.y, o.w, o.h));
+            ctx.fillStyle = '#10b981';
+            ctx.fillRect(me.x - 50, me.y - 50, 100, 100);
+            for (let id in players) {
+                if (id !== myId && players[id].hp > 0 && !players[id].inBush) {
+                    ctx.fillStyle = '#ef4444';
+                    ctx.fillRect(players[id].x - 50, players[id].y - 50, 100, 100);
+                }
+            }
+            if (zoneRadius < MAP_SIZE*2) {
+                ctx.beginPath(); ctx.arc(0, 0, zoneRadius, 0, Math.PI*2);
+                ctx.strokeStyle = '#ef4444'; ctx.lineWidth = 40; ctx.stroke();
+            }
             ctx.restore();
         }
 
         function drawSoldier(p, isMe) {
-            ctx.save(); ctx.translate(p.x, p.y);
+            ctx.save(); ctx.translate(p.x, p.y); if (p.inBush && !isMe) ctx.globalAlpha = 0.2;
             ctx.textAlign = 'center'; ctx.font = 'bold 10px Orbitron'; ctx.fillStyle = isMe ? '#10b981' : '#fff';
             ctx.fillText(p.name, 0, -40); ctx.rotate(p.angle);
             ctx.fillStyle = '#475569'; ctx.fillRect(20, -4, 25, 8);
@@ -790,15 +1124,19 @@
         }
 
         function generateObstacles(seedStr) {
-            obstacles = [];
+            obstacles = []; bushes = []; items = [];
             const rnd = mulberry32(hashCode(seedStr || "default"));
             for (let i = 0; i < 30; i++) {
-                obstacles.push({ 
-                    x: (rnd() - 0.5) * MAP_SIZE * 1.8, 
-                    y: (rnd() - 0.5) * MAP_SIZE * 1.8, 
-                    w: 80 + rnd() * 100, 
-                    h: 80 + rnd() * 100 
-                });
+                obstacles.push({ x: (rnd() - 0.5) * MAP_SIZE * 1.8, y: (rnd() - 0.5) * MAP_SIZE * 1.8, w: 80 + rnd() * 100, h: 80 + rnd() * 100 });
+            }
+            for (let i = 0; i < 20; i++) {
+                bushes.push({ x: (rnd() - 0.5) * MAP_SIZE * 1.8, y: (rnd() - 0.5) * MAP_SIZE * 1.8, w: 120 + rnd() * 100, h: 120 + rnd() * 100 });
+            }
+            for (let i = 0; i < 20; i++) {
+                obstacles.push({ x: (rnd() - 0.5) * MAP_SIZE * 1.8, y: (rnd() - 0.5) * MAP_SIZE * 1.8, w: 60, h: 60, destructible: true, hp: 100 });
+            }
+            for (let i = 0; i < 15; i++) {
+                items.push({ x: (rnd() - 0.5) * MAP_SIZE * 1.8, y: (rnd() - 0.5) * MAP_SIZE * 1.8, active: true });
             }
         }
 
@@ -826,18 +1164,47 @@
         }
 
         window.addEventListener('keydown', e => {
-            keys[e.code] = true;
-            if (e.code.includes('Digit')) {
-                const d = e.code.replace('Digit', '');
-                if (WEAPONS[d]) {
-                    me.weapon = d;
-                    document.querySelectorAll('.weapon-slot').forEach(s => s.classList.remove('active'));
-                    document.getElementById(`w-${d}`).classList.add('active');
-                    updateAmmoDisplay();
+            if (e.code === 'Tab') {
+                e.preventDefault();
+                document.getElementById('tab-scoreboard').classList.remove('hidden');
+                const list = Object.values(players).sort((a, b) => b.kills - a.kills);
+                document.getElementById('tab-list').innerHTML = list.map((p, i) => `
+                    <div class="flex justify-between items-center p-3 border-b border-slate-700 bg-slate-800/50 rounded">
+                        <div class="font-bold ${p.id === myId ? 'text-emerald-400' : 'text-white'}">${i+1}. [${p.rank || 'RECRUTA'}] ${p.name}</div>
+                        <div class="font-black text-xl">${p.kills} <span class="text-xs text-slate-400">KILLS</span></div>
+                    </div>
+                `).join('');
+            }
+            if (e.code === 'KeyT' && document.activeElement !== document.getElementById('chat-input')) {
+                e.preventDefault();
+                document.getElementById('chat-input').focus();
+            }
+            if (e.code === 'Enter' && document.activeElement === document.getElementById('chat-input')) {
+                const input = document.getElementById('chat-input');
+                if (input.value.trim()) {
+                    push(ref(db, `v3/rooms/${currentRoomId}/chat`), { name: me.name, text: input.value.trim() });
+                    input.value = '';
+                }
+                input.blur();
+            }
+            
+            if (document.activeElement !== document.getElementById('chat-input') && document.activeElement !== document.getElementById('nickname') && document.activeElement !== document.getElementById('new-room-name') && document.activeElement !== document.getElementById('new-room-pass')) {
+                keys[e.code] = true;
+                if (e.code.includes('Digit')) {
+                    const d = e.code.replace('Digit', '');
+                    if (WEAPONS[d]) {
+                        me.weapon = d;
+                        document.querySelectorAll('.weapon-slot').forEach(s => s.classList.remove('active'));
+                        document.getElementById(`w-${d}`).classList.add('active');
+                        updateAmmoDisplay();
+                    }
                 }
             }
         });
-        window.addEventListener('keyup', e => keys[e.code] = false);
+        window.addEventListener('keyup', e => {
+            if (e.code === 'Tab') document.getElementById('tab-scoreboard').classList.add('hidden');
+            keys[e.code] = false;
+        });
         window.addEventListener('mousemove', e => { mouseX = e.clientX; mouseY = e.clientY; });
         window.addEventListener('mousedown', () => keys.MouseDown = true);
         window.addEventListener('mouseup', () => keys.MouseDown = false);
