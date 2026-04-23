@@ -602,7 +602,11 @@
 
             onChildAdded(ref(db, `v3/rooms/${currentRoomId}/shots`), (snap) => {
                 const s = snap.val();
-                if (s && s.owner !== myId) createProjectile(s, false);
+                if (s && s.owner !== myId) {
+                    const amIHost = (Object.keys(players).sort()[0] === myId);
+                    const isMyBotShot = amIHost && s.owner.startsWith('BOT_');
+                    if (!isMyBotShot) createProjectile(s, false);
+                }
                 remove(ref(db, `v3/rooms/${currentRoomId}/shots/${snap.key}`));
             });
             onChildAdded(ref(db, `v3/rooms/${currentRoomId}/blood`), (snap) => {
@@ -639,6 +643,13 @@
                 updateHUD(); // smooth update locally
             } else if (me.hp < me.targetHp) {
                 me.hp = me.targetHp;
+            }
+            
+            for (let id in players) {
+                if (players[id].targetHp !== undefined) {
+                    if (players[id].hp > players[id].targetHp) players[id].hp -= 0.5;
+                    else if (players[id].hp < players[id].targetHp) players[id].hp = players[id].targetHp;
+                }
             }
 
             if (me.hp <= 0) {
@@ -767,8 +778,17 @@
                         }
                         if (nearest) {
                             let ang = Math.atan2(nearest.y - p.y, nearest.x - p.x);
-                            let nx = p.x + Math.cos(ang) * 4.5;
-                            let ny = p.y + Math.sin(ang) * 4.5;
+                            
+                            if (p.strafeDir === undefined || Math.random() < 0.02) {
+                                p.strafeDir = (Math.random() > 0.5 ? 1 : -1) * (Math.PI / 2.5);
+                            }
+                            
+                            let moveAng = ang;
+                            if (minDist < 300) moveAng = ang + p.strafeDir;
+                            else if (minDist < 150) moveAng = ang + Math.PI;
+                            
+                            let nx = p.x + Math.cos(moveAng) * 4.5;
+                            let ny = p.y + Math.sin(moveAng) * 4.5;
                             let cx = false, cy = false;
                             obstacles.forEach(o => {
                                 if (checkCol(o, nx, p.y)) cx = true;
@@ -778,9 +798,10 @@
                             if (!cy) p.y = ny; else p.x += (Math.random()-0.5)*15;
                             
                             p.angle = ang;
-                            if (minDist < 600 && Math.random() < 0.04) {
-                                const shot = { owner: id, x: p.x, y: p.y, angle: p.angle + (Math.random()-0.5)*0.2, weapon: p.weapon };
+                            if (minDist < 600 && Math.random() < 0.06) {
+                                const shot = { owner: id, x: p.x, y: p.y, angle: p.angle + (Math.random()-0.5)*0.3, weapon: p.weapon };
                                 push(ref(db, `v3/rooms/${currentRoomId}/shots`), shot);
+                                createProjectile(shot, true); // Host generates damage for bots
                             }
                             fbUpdate(ref(db, `v3/rooms/${currentRoomId}/players/${id}`), { x: p.x, y: p.y, angle: p.angle });
                         }
@@ -821,8 +842,8 @@
                                     const dist = Math.hypot(p.x - players[id].x, p.y - players[id].y);
                                     if (dist < 200) {
                                         const dmg = 150 * (1 - dist / 200);
-                                        if (id !== myId) damage(id, dmg, p.x, p.y);
-                                        else me.targetHp = Math.max(0, me.targetHp - dmg);
+                                        if (id !== p.owner) damage(id, dmg, p.x, p.y);
+                                        else if (p.owner === myId) me.targetHp = Math.max(0, me.targetHp - dmg);
                                     }
                                 }
                             }
@@ -855,14 +876,12 @@
                 }
 
                 let hitPlayer = false;
-                if (p.local) {
-                    for (let id in players) {
-                        if (id !== myId && players[id].hp > 0 && Math.hypot(p.x - players[id].x, p.y - players[id].y) < 30) {
-                            hitPlayer = true;
-                            if (!w.isAoE) {
-                                damage(id, p.damage, me.x, me.y);
-                                return false;
-                            }
+                for (let id in players) {
+                    if (id !== p.owner && players[id].hp > 0 && Math.hypot(p.x - players[id].x, p.y - players[id].y) < 30) {
+                        hitPlayer = true;
+                        if (!w.isAoE) {
+                            if (p.local) damage(id, p.damage, p.x, p.y);
+                            return false;
                         }
                     }
                 }
@@ -876,8 +895,8 @@
                                     const dist = Math.hypot(p.x - players[id].x, p.y - players[id].y);
                                     if (dist < 150) {
                                         const dmg = p.damage * (1 - dist / 150);
-                                        if (id !== myId) damage(id, dmg, me.x, me.y);
-                                        else me.targetHp = Math.max(0, me.targetHp - dmg); // Self damage
+                                        if (id !== p.owner) damage(id, dmg, p.x, p.y);
+                                        else if (p.owner === myId) me.targetHp = Math.max(0, me.targetHp - dmg);
                                     }
                                 }
                             }
@@ -1078,11 +1097,7 @@
                 }
             }
             
-            // Weather (Snow)
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
-            for (let i = 0; i < 200; i++) {
-                ctx.fillRect(camera.x - canvas.width/2 + Math.random()*canvas.width, camera.y - canvas.height/2 + ((Date.now()/10 + i*100) % canvas.height), 2, 2);
-            }
+
 
             ctx.restore();
             
