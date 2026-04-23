@@ -230,6 +230,15 @@
         </div>
     </div>
 
+    <!-- 4. TELA DE MORTE -->
+    <div id="screen-death" class="ui-screen hidden">
+        <div class="menu-card">
+            <h1 class="text-5xl font-black mb-1 text-red-500 italic tracking-tighter">ELIMINADO</h1>
+            <p class="text-slate-400 text-xs mb-10 uppercase tracking-widest font-bold">REPOSICIONANDO EM BREVE</p>
+            <div id="respawn-timer" class="text-7xl font-black text-white italic">5</div>
+        </div>
+    </div>
+
     <!-- HUD EM JOGO -->
     <div id="leaderboard" class="hidden">
         <div
@@ -331,12 +340,12 @@
             2: { fireRate: 100, ammo: 150, speed: 16, spread: 0.1, recoil: 1.5, count: 1, color: '#10b981', damage: 12 },
             3: { fireRate: 800, ammo: 30, speed: 12, spread: 0.4, recoil: 8, count: 6, color: '#ef4444', damage: 15 },
             4: { fireRate: 1500, ammo: 10, speed: 28, spread: 0, recoil: 15, count: 1, color: '#6366f1', damage: 85 },
-            5: { fireRate: 2000, ammo: 5, speed: 4, accel: 1.05, spread: 0, recoil: 20, count: 1, color: '#fbbf24', damage: 80, isAoE: true }
+            5: { fireRate: 2000, ammo: 5, speed: 4, accel: 1.05, spread: 0, recoil: 20, count: 1, color: '#fbbf24', damage: 100, isAoE: true }
         };
 
         let myId = null, currentRoomId = null;
         let players = {}, projectiles = [], particles = [], obstacles = [], items = {}, explosions = [];
-        const MAP_SIZE = 1500;
+        const MAP_SIZE = 2000;
         const keys = {};
         let mouseX = 0, mouseY = 0;
 
@@ -688,23 +697,35 @@
             active = false;
             me.hp = 0;
             updateHUD();
-            setTimeout(() => {
-                me.ammo = { 1: Infinity, 2: 150, 3: 30, 4: 10, 5: 5 };
-                
-                let spawn;
-                if (me.killerPos) {
-                    spawn = getSafeSpawn(me.killerPos.x, me.killerPos.y, true);
-                } else {
-                    spawn = getSafeSpawn();
+            
+            let counter = 5;
+            document.getElementById('respawn-timer').innerText = counter;
+            showScreen('screen-death');
+            
+            const interval = setInterval(() => {
+                counter--;
+                document.getElementById('respawn-timer').innerText = counter;
+                if (counter <= 0) {
+                    clearInterval(interval);
+                    
+                    me.ammo = { 1: Infinity, 2: 150, 3: 30, 4: 10, 5: 5 };
+                    
+                    let spawn;
+                    if (me.killerPos) {
+                        spawn = getSafeSpawn(me.killerPos.x, me.killerPos.y, true);
+                    } else {
+                        spawn = getSafeSpawn();
+                    }
+                    me.x = spawn.x; me.y = spawn.y;
+                    me.hp = 100; me.targetHp = 100;
+                    me.killerPos = null;
+                    
+                    document.getElementById('screen-death').classList.add('hidden');
+                    active = true;
+                    fbUpdate(ref(db, `v3/rooms/${currentRoomId}/players/${myId}`), { x: me.x, y: me.y, hp: 100, targetHp: 100 });
+                    updateAmmoDisplay();
                 }
-                me.x = spawn.x; me.y = spawn.y;
-                me.hp = 100; me.targetHp = 100;
-                me.killerPos = null;
-                
-                active = true;
-                fbUpdate(ref(db, `v3/rooms/${currentRoomId}/players/${myId}`), { x: me.x, y: me.y, hp: 100, targetHp: 100 });
-                updateAmmoDisplay();
-            }, 3000);
+            }, 1000);
         }
 
         function updateAmmoDisplay() {
